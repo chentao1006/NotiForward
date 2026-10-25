@@ -1,0 +1,69 @@
+name: NotiForward
+options:
+  bundleIdPrefix: com.ct106
+  deploymentTarget:
+    macOS: "15.0"
+  developmentLanguage: en
+  xcodeVersion: "27.1"
+settings:
+  base:
+    DEVELOPMENT_TEAM: U2NEAJ73J2
+    SWIFT_VERSION: "6.0"
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 1.0.0
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    OTHER_LDFLAGS: "$(inherited) -lsqlite3"
+targetTemplates:
+  NotiForwardApp:
+    type: application
+    platform: macOS
+    sources:
+      - path: NotiForward
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ct106.notiforward
+        PRODUCT_NAME: NotiForward
+        INFOPLIST_FILE: NotiForward/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+targets:
+  # Direct download (Developer ID, notarized DMG).
+  NotiForward:
+    templates: [NotiForwardApp]
+    settings:
+      base:
+        CODE_SIGN_ENTITLEMENTS: NotiForward/NotiForward.entitlements
+    scheme:
+      gatherCoverageData: false
+      testTargets:
+        - NotiForwardTests
+  # Mac App Store: no temporary-exception entitlements; `#if APP_STORE` drops code that needs them.
+  NotiForwardAppStore:
+    templates: [NotiForwardApp]
+    settings:
+      base:
+        CODE_SIGN_ENTITLEMENTS: NotiForward/NotiForwardAppStore.entitlements
+        OTHER_SWIFT_FLAGS: "$(inherited) -D APP_STORE"
+    scheme:
+      gatherCoverageData: false
+  NotiForwardTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+      # Pure logic is compiled straight into the test bundle, so tests run without launching the app.
+      - path: NotiForward/Models/Models.swift
+      - path: NotiForward/Forwarding/RuleEngine.swift
+      - path: NotiForward/Models/ProLimits.swift
+      - path: NotiForward/Forwarding/BarkClient.swift
+      - path: NotiForward/Localization/LanguageBundle.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ct106.notiforward.tests
+        GENERATE_INFOPLIST_FILE: YES

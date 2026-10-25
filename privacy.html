@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - NotiForward</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --text-main: #1D1D1F;
+            --text-secondary: #86868B;
+            --bg-color: #FFFFFF;
+            --section-bg: #F5F5F7;
+            --border-color: #D2D2D7;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary-color: #0A84FF;
+                --text-main: #F5F5F7;
+                --text-secondary: #86868B;
+                --bg-color: #000000;
+                --section-bg: #1C1C1E;
+                --border-color: #38383A;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            letter-spacing: -0.01em;
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            background-color: var(--bg-color);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        header {
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .last-updated {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 17px;
+        }
+
+        ul {
+            margin-bottom: 25px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            font-size: 17px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: var(--section-bg);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .section {
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .language-switcher {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .btn-lang {
+            display: inline-block;
+            padding: 8px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 0 5px;
+            cursor: pointer;
+            color: var(--text-main);
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .btn-lang:hover {
+            background-color: var(--section-bg);
+        }
+
+        .footer {
+            margin-top: 100px;
+            padding-bottom: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 80px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 24px;
+            }
+            h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="language-switcher">
+        <a href="#en" class="btn-lang">English</a>
+        <a href="#zh" class="btn-lang">简体中文</a>
+    </div>
+
+    <header id="en">
+        <div class="badge">NotiForward Privacy Policy</div>
+        <h1>Privacy Policy</h1>
+        <p class="last-updated">Last updated: October 2026</p>
+    </header>
+
+    <div class="section">
+        <p>
+            NotiForward (知会 in Chinese) is a macOS menu bar app that forwards notifications you choose from your Mac to your iPhone through Bark. This policy explains what data the app handles and where it goes.
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>1. No Data Collected by the Developer</h2>
+        <p>The developer <strong>does not collect, store, or receive</strong> any of your data. There is no account, no analytics, no tracking, and no server operated by the developer.</p>
+    </div>
+    <div class="section">
+        <h2>2. Notification Content</h2>
+        <ul>
+            <li>With your permission, NotiForward reads the macOS Notification Center folder (<code>~/Library/Group Containers/group.com.apple.usernoted</code>), which you select once in a system file dialog. It reads nothing else on your Mac.</li>
+            <li>Your forwarding rules (apps and keywords) are applied on your Mac. Notifications that do not match are never sent anywhere.</li>
+            <li>Notifications that match are sent over HTTPS to the <strong>Bark server you configure</strong> (by default <code>api.day.app</code>, operated by the Bark project), which delivers them to your iPhone through Apple Push Notification service. Use a self-hosted Bark server if you do not want notification content to pass through a third-party server.</li>
+        </ul>
+    </div>
+    <div class="section">
+        <h2>3. App Icons</h2>
+        <p>To show app icons in forwarded notifications, NotiForward looks up the sending app's bundle identifier (for example <code>ru.keepcoder.Telegram</code>) in Apple's public App Store lookup service. No notification content is included. This can be turned off in Settings.</p>
+    </div>
+    <div class="section">
+        <h2>4. Local Storage</h2>
+        <p>Settings, your Bark key and a short-lived queue of notifications waiting to be sent are stored only on your Mac, inside the app's sandbox container. Queued notifications are deleted once sent, or after six hours.</p>
+    </div>
+    <div class="section">
+        <h2>5. Changes to This Policy</h2>
+        <p>Any changes will be posted on this page with an updated date.</p>
+    </div>
+    <div class="section">
+        <h2>6. Contact</h2>
+        <p>Questions or concerns: <a href="https://github.com/chentao1006/noti-forward/issues">github.com/chentao1006/noti-forward/issues</a></p>
+    </div>
+
+    <hr>
+
+    <header id="zh">
+        <div class="badge">知会 隐私政策</div>
+        <h1>隐私政策</h1>
+        <p class="last-updated">最后更新：2026 年 10 月</p>
+    </header>
+
+    <div class="section">
+        <p>知会（NotiForward）是一款 macOS 菜单栏应用，通过 Bark 把你在 Mac 上选定的通知转发到 iPhone。本政策说明应用会处理哪些数据，以及数据去向。</p>
+    </div>
+
+    <div class="section">
+        <h2>1. 开发者不收集任何数据</h2>
+        <p>开发者<strong>不收集、不存储、也不接收</strong>你的任何数据。没有账号，没有统计分析和追踪，开发者也不运营任何服务器。</p>
+    </div>
+    <div class="section">
+        <h2>2. 通知内容</h2>
+        <ul>
+            <li>经你授权后，知会读取 macOS 通知中心文件夹（<code>~/Library/Group Containers/group.com.apple.usernoted</code>），该文件夹由你在系统文件对话框中选择一次。不会读取 Mac 上的其他任何内容。</li>
+            <li>转发规则（应用和关键词）在你的 Mac 上执行，不符合规则的通知不会被发送到任何地方。</li>
+            <li>符合规则的通知通过 HTTPS 发送到<strong>你设置的 Bark 服务器</strong>（默认为 Bark 项目运营的 <code>api.day.app</code>），再经 Apple 推送通知服务送达你的 iPhone。如不希望通知内容经过第三方服务器，请使用自建的 Bark 服务器。</li>
+        </ul>
+    </div>
+    <div class="section">
+        <h2>3. 应用图标</h2>
+        <p>为在转发的通知中显示应用图标，知会会把发送通知的应用的 Bundle ID（例如 <code>ru.keepcoder.Telegram</code>）提交给 Apple 公开的 App Store 查询服务，不包含任何通知内容。可在设置中关闭。</p>
+    </div>
+    <div class="section">
+        <h2>4. 本地存储</h2>
+        <p>设置、Bark 密钥以及等待发送的通知队列仅保存在你的 Mac 上、应用的沙盒容器内。队列中的通知发送后即删除，最长保留 6 小时。</p>
+    </div>
+    <div class="section">
+        <h2>5. 政策更新</h2>
+        <p>如有变更，将在本页面发布并更新日期。</p>
+    </div>
+    <div class="section">
+        <h2>6. 联系方式</h2>
+        <p>如有疑问：<a href="https://github.com/chentao1006/noti-forward/issues">github.com/chentao1006/noti-forward/issues</a></p>
+    </div>
+</div>
+
+</body>
+</html>

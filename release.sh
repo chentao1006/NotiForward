@@ -1,0 +1,165 @@
+#!/bin/bash
+# Bumps the version, builds a Developer ID signed (and, with credentials, notarized)
+# DMG, then commits, tags and publishes a GitHub release.
+#
+# Usage: ./release.sh [version] [--skip-build] [--no-publish] [--app-store]
+#   version       new marketing version, prompted for when omitted
+#   --skip-build  reuse dist/NotiForward.dmg and the current version
+#   --no-publish  stop after building (no git or GitHub steps)
+#   --app-store   also archive the NotiForwardAppStore target and upload it to
+#                 App Store Connect (uses the Apple ID signed in to Xcode)
+#
+# Notarization needs APPLE_ID and APPLE_PASSWORD (an app-specific password).
+
+set -eo pipefail
+cd "$(dirname "$0")"
+
+APP_NAME="NotiForward"
+SCHEME="NotiForward"
+PROJECT="NotiForward.xcodeproj"
+TEAM_ID="U2NEAJ73J2"
+RESULT_DIR="./dist"
+ARCHIVE_PATH="${RESULT_DIR}/NotiForward.xcarchive"
+EXPORT_PATH="${RESULT_DIR}/exported"
+DMG_PATH="${RESULT_DIR}/NotiForward.dmg"
+
+current_setting() { sed -nE "s/^ *$1: *\"?([^\"]*)\"?$/\1/p" project.yml | head -1; }
+CURRENT_VERSION=$(current_setting MARKETING_VERSION)
+CURRENT_BUILD=$(current_setting CURRENT_PROJECT_VERSION)
+
+SKIP_BUILD=false
+PUBLISH=true
+APP_STORE=false
+NEW_VERSION=""
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -s|--skip-build) SKIP_BUILD=true ;;
+        --no-publish) PUBLISH=false ;;
+        --app-store) APP_STORE=true ;;
+        -*) echo "Unknown option: $1"; exit 1 ;;
+        *) NEW_VERSION="$1" ;;
+    esac
+    shift
+done
+
+echo "----------------------------------------"
+echo "Current Version: ${CURRENT_VERSION} (Build ${CURRENT_BUILD})"
+echo "----------------------------------------"
+
+notarize() {
+    local path="$1"
+    xcrun notarytool submit "${path}" \
+        --apple-id "${APPLE_ID}" --password "${APPLE_PASSWORD}" --team-id "${TEAM_ID}" --wait
+}
+
+if [ "${SKIP_BUILD}" = "true" ]; then
+    NEW_VERSION="${NEW_VERSION:-$CURRENT_VERSION}"
+    NEW_BUILD="${CURRENT_BUILD}"
+    [ -f "${DMG_PATH}" ] || { echo "❌ ${DMG_PATH} not found"; exit 1; }
+    echo "⏩ Skipping build, releasing ${NEW_VERSION} (Build ${NEW_BUILD})."
+else
+    [ -n "${NEW_VERSION}" ] || read -r -p "Enter NEW Version (Current: ${CURRENT_VERSION}): " NEW_VERSION
+    [ -n "${NEW_VERSION}" ] || { echo "❌ Version cannot be empty."; exit 1; }
+    NEW_BUILD=$((CURRENT_BUILD + 1))
+    echo "🚀 Preparing ${NEW_VERSION} (Build ${NEW_BUILD})..."
+
+    # 1. Update version and regenerate the project
+    sed -i '' -E "s/^( *MARKETING_VERSION: *).*/\1${NEW_VERSION}/" project.yml
+    sed -i '' -E "s/^( *CURRENT_PROJECT_VERSION: *).*/\1${NEW_BUILD}/" project.yml
+    if command -v xcodegen >/dev/null 2>&1; then
+        xcodegen generate --spec project.yml --quiet
+    else
+        sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = ${NEW_VERSION};/" "${PROJECT}/project.pbxproj"
+        sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = ${NEW_BUILD};/" "${PROJECT}/project.pbxproj"
+    fi
+
+    # 2. Checks and tests
+    ./test.sh --no-install
+
+    # 3. Archive and export with Developer ID
+    rm -rf "${RESULT_DIR}"
+    mkdir -p "${RESULT_DIR}"
+    echo "📦 Archiving..."
+    xcodebuild archive -project "${PROJECT}" -scheme "${SCHEME}" -configuration Release \
+        -destination "generic/platform=macOS" -archivePath "${ARCHIVE_PATH}" \
+        ENABLE_HARDENED_RUNTIME=YES > "${RESULT_DIR}/archive.log" 2>&1 \
+        || { tail -40 "${RESULT_DIR}/archive.log"; exit 1; }
+    echo "📤 Exporting..."
+    xcodebuild -exportArchive -archivePath "${ARCHIVE_PATH}" \
+        -exportOptionsPlist ExportOptions.plist -exportPath "${EXPORT_PATH}" \
+        -allowProvisioningUpdates > "${RESULT_DIR}/export.log" 2>&1 \
+        || { tail -40 "${RESULT_DIR}/export.log"; exit 1; }
+    EXPORTED_APP="${EXPORT_PATH}/${APP_NAME}.app"
+    [ -d "${EXPORTED_APP}" ] || { echo "❌ Exported app not found at ${EXPORTED_APP}"; exit 1; }
+
+    # 4. Notarize the app, then build and notarize the DMG
+    if [ -n "${APPLE_ID}" ] && [ -n "${APPLE_PASSWORD}" ]; then
+        echo "🔐 Notarizing app..."
+        /usr/bin/ditto -c -k --keepParent "${EXPORTED_APP}" "${RESULT_DIR}/app.zip"
+        notarize "${RESULT_DIR}/app.zip"
+        xcrun stapler staple "${EXPORTED_APP}"
+        rm -f "${RESULT_DIR}/app.zip"
+    fi
+
+    echo "💿 Creating DMG..."
+    DMG_DIR="${RESULT_DIR}/dmg"
+    mkdir -p "${DMG_DIR}"
+    cp -R "${EXPORTED_APP}" "${DMG_DIR}/"
+    ln -s /Applications "${DMG_DIR}/Applications"
+    hdiutil create -volname "${APP_NAME}" -srcfolder "${DMG_DIR}" -ov -format UDZO "${DMG_PATH}" > /dev/null
+    rm -rf "${DMG_DIR}"
+
+    if [ -n "${APPLE_ID}" ] && [ -n "${APPLE_PASSWORD}" ]; then
+        echo "🔐 Notarizing DMG..."
+        notarize "${DMG_PATH}"
+        xcrun stapler staple "${DMG_PATH}"
+        echo "✅ Notarized."
+    else
+        echo "⚠️ Notarization skipped: set APPLE_ID and APPLE_PASSWORD so the DMG opens on other Macs."
+    fi
+    echo "✅ DMG ready: ${DMG_PATH}"
+fi
+
+# 5. Mac App Store upload
+if [ "${APP_STORE}" = "true" ]; then
+    APP_STORE_ARCHIVE="${RESULT_DIR}/NotiForwardAppStore.xcarchive"
+    mkdir -p "${RESULT_DIR}"
+    echo "🛍️ Archiving the App Store build..."
+    xcodebuild archive -project "${PROJECT}" -scheme NotiForwardAppStore -configuration Release \
+        -destination "generic/platform=macOS" -archivePath "${APP_STORE_ARCHIVE}" \
+        > "${RESULT_DIR}/appstore-archive.log" 2>&1 \
+        || { tail -40 "${RESULT_DIR}/appstore-archive.log"; exit 1; }
+    echo "📤 Uploading to App Store Connect..."
+    xcodebuild -exportArchive -archivePath "${APP_STORE_ARCHIVE}" \
+        -exportOptionsPlist ExportOptionsAppStore.plist -exportPath "${RESULT_DIR}/appstore" \
+        -allowProvisioningUpdates > "${RESULT_DIR}/appstore-upload.log" 2>&1 \
+        || { tail -40 "${RESULT_DIR}/appstore-upload.log"; exit 1; }
+    echo "✅ Uploaded ${NEW_VERSION} (Build ${NEW_BUILD}). Submit it for review in App Store Connect."
+fi
+
+[ "${PUBLISH}" = "true" ] || { echo "🎉 Done (not published)."; exit 0; }
+
+# 6. Commit, tag and push
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "⚠️ Not a git repository; skipping commit, tag and GitHub release."
+    exit 0
+fi
+TAG="v${NEW_VERSION}"
+git add -A
+git diff --cached --quiet || git commit -m "chore: release version ${NEW_VERSION} build ${NEW_BUILD}"
+git tag -f -a "${TAG}" -m "Release ${TAG}"
+BRANCH=$(git symbolic-ref --short HEAD)
+git push origin "${BRANCH}"
+git push -f origin "${TAG}"
+
+# 7. GitHub release
+if command -v gh >/dev/null 2>&1; then
+    echo "📡 Publishing GitHub release ${TAG}..."
+    gh release delete "${TAG}" --yes 2>/dev/null || true
+    gh release create "${TAG}" "${DMG_PATH}" \
+        --title "${APP_NAME} ${NEW_VERSION}" \
+        --notes "Release ${NEW_VERSION} (Build ${NEW_BUILD})"
+    echo "🎉 Release completed!"
+else
+    echo "⚠️ GitHub CLI (gh) not found. Upload ${DMG_PATH} to the ${TAG} release manually."
+fi
