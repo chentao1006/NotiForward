@@ -3,7 +3,7 @@
 # DMG, then commits, tags and publishes a GitHub release.
 #
 # Usage: ./release.sh [version] [--skip-build] [--no-publish] [--app-store]
-#   version       new marketing version, prompted for when omitted
+#   version       new marketing version; prompted for when omitted, empty keeps the current one
 #   --skip-build  reuse dist/NotiForward.dmg and the current version
 #   --no-publish  stop after building (no git or GitHub steps)
 #   --app-store   also archive the NotiForwardAppStore target and upload it to
@@ -13,6 +13,9 @@
 # un-notarized build is refused, since Gatekeeper would block it; ALLOW_UNNOTARIZED=1 overrides.
 # After the GitHub release, the Homebrew cask is updated (SKIP_HOMEBREW_RELEASE=1 skips it).
 
+# Braces make bash read the whole script before running it, so editing this file
+# while a run is in progress can't make the running copy read garbled lines.
+{
 set -eo pipefail
 cd "$(dirname "$0")"
 
@@ -79,8 +82,11 @@ if [ "${SKIP_BUILD}" = "true" ]; then
     xcrun stapler validate "${DMG_PATH}" >/dev/null 2>&1 && NOTARIZED=true
     echo "⏩ Skipping build, releasing ${NEW_VERSION} (Build ${NEW_BUILD})."
 else
-    [ -n "${NEW_VERSION}" ] || read -r -p "Enter NEW Version (Current: ${CURRENT_VERSION}): " NEW_VERSION
-    [ -n "${NEW_VERSION}" ] || { echo "❌ Version cannot be empty."; exit 1; }
+    [ -n "${NEW_VERSION}" ] || read -r -p "Enter NEW Version (leave empty to keep current ${CURRENT_VERSION}): " NEW_VERSION
+    if [ -z "${NEW_VERSION}" ]; then
+        NEW_VERSION="${CURRENT_VERSION}"
+        echo "Keeping current version: ${NEW_VERSION}"
+    fi
     NEW_BUILD=$((CURRENT_BUILD + 1))
     echo "🚀 Preparing ${NEW_VERSION} (Build ${NEW_BUILD})..."
 
@@ -200,3 +206,6 @@ if command -v gh >/dev/null 2>&1; then
 else
     echo "⚠️ GitHub CLI (gh) not found. Upload ${DMG_PATH} to the ${TAG} release manually."
 fi
+
+exit
+}

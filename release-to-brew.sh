@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Braces make bash read the whole script before running it, so editing this file
+# while a run is in progress can't make the running copy read garbled lines.
+{
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -247,3 +251,6 @@ echo "================================================="
 echo "  Homebrew release updated"
 echo "================================================="
 echo "Install command: brew install --cask ${TAP_OWNER}/${TAP_NAME}/${CASK_TOKEN}"
+
+exit
+}

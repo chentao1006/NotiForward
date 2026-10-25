@@ -5,6 +5,9 @@
 # Usage: ./test.sh            checks + tests + install + launch
 #        ./test.sh --no-install   checks + tests only
 
+# Braces make bash read the whole script before running it, so editing this file
+# while a run is in progress can't make the running copy read garbled lines.
+{
 set -eo pipefail
 cd "$(dirname "$0")"
 
@@ -85,3 +88,6 @@ echo "🚀 8. Launching ${APP_NAME}..."
 sleep 1
 open "${INSTALL_PATH}"
 echo "🎉 Done."
+
+exit
+}
