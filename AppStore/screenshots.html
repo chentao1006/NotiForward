@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!-- Mac App Store screenshots. Render each slide at 1440×900 CSS px with device scale 2
+     (= 2880×1800): screenshots.html#zh-1 … #en-5. See AppStore/render.sh. -->
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root { --blue: #1a6be0; --violet: #6f3fd8; --ink: #0f1222; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body {
+    font-family: -apple-system, "SF Pro Display", "PingFang SC", sans-serif;
+    color: #fff; -webkit-font-smoothing: antialiased;
+    background: radial-gradient(120% 90% at 85% 10%, #3f7cf0 0%, transparent 55%),
+                linear-gradient(135deg, #0f55bd 0%, #1a6be0 45%, #6f3fd8 100%);
+}
+.slide { position: absolute; inset: 0; display: none; }
+.slide.active { display: block; }
+.copy { position: absolute; left: 96px; top: 110px; width: 500px; }
+.copy.center { left: 0; right: 0; width: auto; text-align: center; top: 72px; }
+h1 { font-size: 64px; font-weight: 800; line-height: 1.12; letter-spacing: -0.02em; }
+p.sub { margin-top: 22px; font-size: 26px; line-height: 1.45; color: rgba(255,255,255,0.82); font-weight: 500; }
+.brand { position: absolute; left: 96px; bottom: 64px; display: flex; align-items: center; gap: 14px; font-size: 24px; font-weight: 700; }
+.brand img { width: 56px; height: 56px; border-radius: 14px; background: #fff; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+
+/* macOS window */
+.window { position: absolute; background: #1e1f24; border-radius: 22px; box-shadow: 0 40px 90px rgba(0,0,0,0.38), 0 0 0 1px rgba(255,255,255,0.08); overflow: hidden; color: #e9e9ee; }
+.titlebar { height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.titlebar i { width: 13px; height: 13px; border-radius: 50%; display: block; }
+.titlebar i:nth-child(1) { background: #ff5f57; } .titlebar i:nth-child(2) { background: #febc2e; } .titlebar i:nth-child(3) { background: #28c840; }
+.tabs { margin: 0 auto; display: flex; gap: 4px; background: rgba(255,255,255,0.06); border-radius: 18px; padding: 4px; font-size: 15px; font-weight: 600; }
+.tabs span { padding: 6px 16px; border-radius: 14px; color: rgba(255,255,255,0.55); }
+.tabs span.on { background: rgba(255,255,255,0.14); color: #fff; }
+.pane { padding: 22px 26px; }
+.group-title { font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.7); margin: 6px 4px 10px; }
+.group { background: #2a2b31; border-radius: 14px; margin-bottom: 18px; }
+.row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.row:last-child { border-bottom: none; }
+.row .grow { flex: 1; }
+.row .muted { color: rgba(255,255,255,0.5); }
+.appicon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 19px; }
+.toggle { width: 46px; height: 26px; border-radius: 13px; background: #2f7cf6; position: relative; }
+.toggle::after { content: ""; position: absolute; right: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.popup { display: inline-block; margin-left: 6px; font-size: 14px; opacity: 0.8; transform: translateY(-3px); }
+.chip { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(47,124,246,0.22); color: #9cc1ff; font-size: 16px; margin: 0 8px 8px 0; }
+.ok { color: #4cd964; font-weight: 600; }
+.field { flex: 1; background: #17181c; border: 2px solid #2f7cf6; border-radius: 10px; padding: 12px 14px; font-family: "SF Mono", Menlo, monospace; font-size: 17px; color: #fff; }
+.btn { padding: 9px 18px; border-radius: 9px; background: rgba(255,255,255,0.12); font-size: 16px; font-weight: 600; }
+
+/* notifications and phone */
+.noti { background: rgba(245,245,247,0.94); color: #111; border-radius: 22px; padding: 16px 18px; box-shadow: 0 18px 40px rgba(0,0,0,0.22); }
+.noti .head { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #6b6b70; margin-bottom: 6px; }
+.noti .head .appicon { width: 26px; height: 26px; border-radius: 7px; font-size: 14px; }
+.noti .head .time { margin-left: auto; }
+.noti .title { font-size: 18px; font-weight: 700; }
+.noti .body { font-size: 17px; color: #333; margin-top: 2px; }
+.phone { position: absolute; width: 340px; height: 700px; border-radius: 58px; background: #0b0b0f; padding: 14px; box-shadow: 0 40px 90px rgba(0,0,0,0.4); }
+.screen { width: 100%; height: 100%; border-radius: 46px; overflow: hidden; position: relative;
+    background: linear-gradient(170deg, #3a7bf0 0%, #6a46d9 60%, #2a1f5c 100%); }
+.island { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 112px; height: 32px; border-radius: 18px; background: #000; }
+.date { position: absolute; top: 74px; width: 100%; text-align: center; font-size: 19px; font-weight: 600; color: rgba(255,255,255,0.85); }
+.clock { position: absolute; top: 96px; width: 100%; text-align: center; font-size: 92px; font-weight: 700; letter-spacing: -0.03em; }
+.stack { position: absolute; left: 12px; right: 12px; top: 250px; display: grid; gap: 10px; }
+.stack .noti { border-radius: 20px; padding: 13px 15px; }
+.stack .noti .title { font-size: 16px; } .stack .noti .body { font-size: 15px; } .stack .noti .head { font-size: 13px; }
+.maclabel { position: absolute; font-size: 20px; font-weight: 700; letter-spacing: 0.08em; color: rgba(255,255,255,0.75); }
+.arrow { position: absolute; font-size: 84px; font-weight: 800; color: rgba(255,255,255,0.9); }
+.tap { position: absolute; width: 74px; height: 74px; border-radius: 50%; background: rgba(255,255,255,0.35); box-shadow: 0 0 0 14px rgba(255,255,255,0.15); }
+
+/* feature cards */
+.cards { position: absolute; left: 96px; right: 96px; top: 300px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 26px; }
+.card { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 28px; padding: 48px 32px; min-height: 380px; backdrop-filter: blur(10px); }
+.card .emoji { font-size: 52px; }
+.card h3 { margin-top: 22px; font-size: 27px; font-weight: 800; }
+.card p { margin-top: 12px; font-size: 19px; line-height: 1.5; color: rgba(255,255,255,0.82); }
+.steps { position: absolute; left: 96px; top: 380px; width: 520px; display: grid; gap: 22px; }
+.step { display: flex; gap: 18px; align-items: flex-start; font-size: 22px; line-height: 1.45; }
+.step b { flex: none; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: var(--blue); display: grid; place-items: center; font-size: 22px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const T = {
+  zh: {
+    s1: ["Mac 上的通知<br>iPhone 上不错过", "知会把你选定的 Mac 通知，通过 Bark 实时推送到 iPhone。"],
+    s2: ["只转发<br>你在意的", "按应用和关键词筛选。规则在 Mac 本机执行，其余通知不会离开你的电脑。"],
+    s3: ["点一下<br>直达对应 App", "推送自带来源应用的图标和链接，在 iPhone 上一点即达。"],
+    s4: ["一分钟<br>完成设置", ""],
+    s5: ["隐私优先，几乎零耗电", "没有账号，没有我们的服务器。"],
+    name: "知会", time: "现在", date: "10月26日 星期日",
+    n: [["聊天", "小林", "下午的会改到三点了"], ["邮件", "发票已开具", "您的订单发票已发送至邮箱"], ["日历", "产品评审", "15:00 · 3 号会议室"], ["工作", "构建完成", "main 分支已部署到生产环境"]],
+    tabs: ["通用", "转发规则", "客户端"],
+    rules: { apps: "应用", strategy: "转发策略", only: "仅转发所选应用", keywords: "关键词", filter: "启用关键词过滤", block: "屏蔽匹配的通知", kwstrategy: "关键词策略", chips: ["广告", "促销", "已读回执"] },
+    client: { token: "设备 Token 或密钥", test: "发送测试通知", sent: "✓ 已发送", status: "状态", access: "通知读取", connected: "✓ 已连接", last: "上次转发", lastv: "1 分钟前", icon: "显示应用图标", open: "点击通知时打开对应 App" },
+    steps: ["在 iPhone 上安装免费的 Bark", "把 Bark 的设备 Token 粘贴进知会", "授权读取通知文件夹，选择要转发的 App"],
+    cards: [["🔒", "本机过滤", "规则在 Mac 上执行，不符合的通知不外发。"], ["🛡️", "沙盒运行", "只读取你授权的通知文件夹，无需完全磁盘访问。"], ["⚡️", "事件驱动", "有新通知才工作，平时完全休眠。"], ["👤", "无需账号", "开发者不收集任何数据，服务器由你选择。"]]
+  },
+  en: {
+    s1: ["Your Mac notifications,<br>on your iPhone", "NotiForward sends the Mac notifications you choose to your iPhone in real time, through Bark."],
+    s2: ["Only what<br>matters to you", "Filter by app and keyword. Rules run on your Mac; everything else stays on it."],
+    s3: ["Tap to open<br>the right app", "Each push carries the app's icon and a link that opens it on your iPhone."],
+    s4: ["Set up<br>in a minute", ""],
+    s5: ["Private by design, easy on power", "No account. No server of ours."],
+    name: "NotiForward", time: "now", date: "Sunday, October 26",
+    n: [["Chat", "Lena", "Moved the review to 3 pm"], ["Mail", "Your invoice is ready", "We've emailed the invoice for your order"], ["Calendar", "Product review", "3:00 PM · Room 3"], ["Work", "Build passed", "main was deployed to production"]],
+    tabs: ["General", "Forwarding Rules", "Client"],
+    rules: { apps: "Apps", strategy: "Forwarding strategy", only: "Only forward selected apps", keywords: "Keywords", filter: "Enable keyword filtering", block: "Block matching notifications", kwstrategy: "Keyword strategy", chips: ["promo", "newsletter", "read receipt"] },
+    client: { token: "Device token or key", test: "Send Test Notification", sent: "✓ Sent", status: "Status", access: "Notification access", connected: "✓ Connected", last: "Last forwarded", lastv: "1 minute ago", icon: "Show app icons", open: "Open the matching iPhone app on tap" },
+    steps: ["Install the free Bark app on your iPhone", "Paste Bark's device token into NotiForward", "Grant access to the notification folder and pick your apps"],
+    cards: [["🔒", "Filtered on your Mac", "Rules run locally. Notifications that don't match never leave."], ["🛡️", "Sandboxed", "Reads only the notification folder you grant. No Full Disk Access."], ["⚡️", "Event-driven", "Wakes only when a notification arrives, sleeps otherwise."], ["👤", "No account", "The developer collects no data. You choose the server."]]
+  }
+};
+const APPS = [["💬", "#34c759"], ["✉️", "#0a84ff"], ["📅", "#ff453a"], ["🛠️", "#5e5ce6"], ["🎵", "#ff375f"]];
+const icon = (i, size) => `<span class="appicon" style="background:${APPS[i][1]}${size ? `;width:${size}px;height:${size}px;border-radius:${size * 0.24}px;font-size:${size * 0.55}px` : ""}">${APPS[i][0]}</span>`;
+const noti = (t, i, time) => `<div class="noti"><div class="head">${icon(i)}${t.n[i][0]}<span class="time">${time || t.time}</span></div><div class="title">${t.n[i][1]}</div><div class="body">${t.n[i][2]}</div></div>`;
+const copy = (s, center) => `<div class="copy${center ? " center" : ""}"><h1>${s[0]}</h1>${s[1] ? `<p class="sub">${s[1]}</p>` : ""}</div>`;
+const brand = t => `<div class="brand"><img src="../icon_1024.png">${t.name}</div>`;
+const phone = (t, x, y, list) => `<div class="phone" style="left:${x}px;top:${y}px"><div class="screen"><div class="island"></div><div class="date">${t.date}</div><div class="clock">9:41</div><div class="stack">${list}</div></div></div>`;
+const tabs = (t, on) => `<div class="titlebar"><i></i><i></i><i></i><div class="tabs">${t.tabs.map((x, i) => `<span class="${i === on ? "on" : ""}">${x}</span>`).join("")}</div></div>`;
+
+const slides = {
+  1: t => copy(t.s1) + brand(t) +
+    `<div class="maclabel" style="left:540px;top:432px">Mac</div>` +
+    `<div class="window" style="left:540px;top:470px;width:400px;padding:16px;background:rgba(30,31,36,0.55)">${noti(t, 0)}</div>` +
+    `<div class="arrow" style="left:948px;top:482px">→</div>` +
+    phone(t, 1040, 100, [0, 1, 2].map(i => noti(t, i, i ? (t === T.zh ? `${i * 5} 分钟前` : `${i * 5}m ago`) : t.time)).join("")) ,
+  2: t => copy(t.s2) + brand(t) + `<div class="window" style="left:720px;top:110px;width:620px">${tabs(t, 1)}<div class="pane">
+      <div class="group-title">${t.rules.apps}</div><div class="group">
+        <div class="row"><span class="grow">${t.rules.strategy}</span><span class="muted">${t.rules.only} <span class="popup">⌄</span></span></div>
+        ${[0, 1, 2, 3].map(i => `<div class="row">${icon(i)}<span class="grow">${t.n[i][0]}</span><span class="muted">⊖</span></div>`).join("")}
+      </div>
+      <div class="group-title">${t.rules.keywords}</div><div class="group">
+        <div class="row"><span class="grow">${t.rules.filter}</span><span class="toggle"></span></div>
+        <div class="row"><span class="grow">${t.rules.kwstrategy}</span><span class="muted">${t.rules.block} <span class="popup">⌄</span></span></div>
+        <div class="row"><div>${t.rules.chips.map(c => `<span class="chip">${c}</span>`).join("")}</div></div>
+      </div></div></div>`,
+  3: t => copy(t.s3) + brand(t) + phone(t, 630, 100, noti(t, 0) + noti(t, 3)) +
+    `<div class="tap" style="left:820px;top:385px"></div>` +
+    `<div class="arrow" style="left:982px;top:380px">→</div>` +
+    `<div class="phone" style="left:1050px;top:100px"><div class="screen" style="background:#f4f5f7">
+       <div class="island"></div><div style="position:absolute;top:80px;left:0;right:0;display:flex;justify-content:center">${icon(0, 72)}</div>
+       <div style="position:absolute;top:160px;left:0;right:0;text-align:center;color:#111;font-size:24px;font-weight:700">${t.n[0][0]}</div>
+       <div style="position:absolute;top:220px;left:22px;right:22px;display:grid;gap:12px">
+         <div style="justify-self:start;background:#e5e5ea;color:#111;padding:12px 16px;border-radius:20px;font-size:18px">${t.n[0][2]}</div>
+         <div style="justify-self:end;background:#1a6be0;color:#fff;padding:12px 16px;border-radius:20px;font-size:18px">👍</div>
+       </div></div></div>`,
+  4: t => copy(t.s4) + brand(t) +
+    `<div class="steps">${t.steps.map((s, i) => `<div class="step"><b>${i + 1}</b><span>${s}</span></div>`).join("")}</div>` +
+    `<div class="window" style="left:720px;top:130px;width:620px">${tabs(t, 2)}<div class="pane">
+      <div class="group-title">${t.client.token}</div><div class="group">
+        <div class="row"><span class="field">Q8x4mK7vB2nWp3Ld9F</span></div>
+        <div class="row"><span class="btn">${t.client.test}</span><span class="ok">${t.client.sent}</span></div>
+      </div>
+      <div class="group-title">${t.client.status}</div><div class="group">
+        <div class="row"><span class="grow">${t.client.access}</span><span class="ok">${t.client.connected}</span></div>
+        <div class="row"><span class="grow">${t.client.last}</span><span class="muted">${t.client.lastv}</span></div>
+      </div>
+      <div class="group">
+        <div class="row"><span class="grow">${t.client.icon}</span><span class="toggle"></span></div>
+        <div class="row"><span class="grow">${t.client.open}</span><span class="toggle"></span></div>
+      </div></div></div>`,
+  5: t => copy(t.s5, true) + brand(t) +
+    `<div class="cards">${t.cards.map(c => `<div class="card"><div class="emoji">${c[0]}</div><h3>${c[1]}</h3><p>${c[2]}</p></div>`).join("")}</div>`
+};
+
+function render() {
+  const [lang, n] = (location.hash.slice(1) || "zh-1").split("-");
+  const t = T[lang];
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  document.getElementById("root").innerHTML = `<div class="slide active">${slides[n](t)}</div>`;
+}
+window.addEventListener("hashchange", render);
+render();
+</script>
+</body>
+</html>
