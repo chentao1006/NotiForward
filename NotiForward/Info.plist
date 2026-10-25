@@ -18,6 +18,10 @@
     <key>NSSupportsSuddenTermination</key><false/>
     <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
     <key>ITSAppUsesNonExemptEncryption</key><false/>
+    <key>SUFeedURL</key><string>https://notiforward.ct106.com/appcast.xml</string>
+    <key>SUPublicEDKey</key><string>T9d+4vUpmrkAXNcwSOu7/MzSO6tIKr8JbVhYe4j0jaE=</string>
+    <key>SUEnableAutomaticChecks</key><true/>
+    <key>SUEnableInstallerLauncherService</key><true/>
     <key>NSHumanReadableCopyright</key><string>Copyright © 2026 CT106.</string>
 </dict>
 </plist>

@@ -22,6 +22,9 @@ struct MenuContentView: View {
             .disabled(!model.general.bark.isConfigured)
             Button(L("Send Test Notification")) { model.sendTest() }
                 .disabled(!model.general.bark.isConfigured)
+#if !APP_STORE
+            Button(L("Check for Updates…")) { model.updater.checkForUpdates() }
+#endif
             Button(L("Settings…")) {
                 model.restoreMenuBar()
                 openSettingsWindow(openWindow)

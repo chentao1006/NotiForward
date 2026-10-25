@@ -24,6 +24,14 @@ final class AppModel {
 
     let language = LanguageBundle.shared
     let purchases = PurchaseService()
+#if !APP_STORE
+    let updater = Updater()
+#endif
+
+    var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        return "\(info?["CFBundleShortVersionString"] as? String ?? "?") (\(info?["CFBundleVersion"] as? String ?? "?"))"
+    }
     private var store: LocalStore?
     private var coordinator: ForwardCoordinator?
     private var monitorTask: Task<Void, Never>?

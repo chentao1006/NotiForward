@@ -59,7 +59,7 @@ if grep -q "temporary-exception" NotiForward/NotiForwardAppStore.entitlements; t
 fi
 run_logged "${LOG_DIR}/appstore-build.log" xcodebuild build \
     -project "${PROJECT}" -scheme NotiForwardAppStore -configuration Debug \
-    -destination "platform=macOS" -derivedDataPath "${DERIVED_DATA_DIR}"
+    -destination "platform=macOS" -derivedDataPath "${DERIVED_DATA_DIR}-AppStore"
 echo "   App Store target builds"
 
 [ "${INSTALL}" = "true" ] || { echo "🎉 Checks and tests passed."; exit 0; }

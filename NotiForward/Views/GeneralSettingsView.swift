@@ -28,6 +28,17 @@ struct GeneralSettingsView: View {
                 Text(L("If hidden, open \(appName) again to restore the menu bar icon."))
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section(L("Updates")) {
+                LabeledContent(L("Version"), value: model.appVersion)
+#if !APP_STORE
+                @Bindable var updater = model.updater
+                Toggle(L("Automatically check for updates"), isOn: $updater.automaticallyChecks)
+                HStack {
+                    Spacer()
+                    Button(L("Check for Updates…")) { model.updater.checkForUpdates() }
+                }
+#endif
+            }
             Section(L("Language")) {
                 Picker(L("App language"), selection: $model.general.language) {
                     ForEach(AppLanguage.allCases) { language in Text(name(of: language)).tag(language) }

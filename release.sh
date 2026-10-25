@@ -148,9 +148,33 @@ else
         echo "⚠️ Notarization skipped: set APPLE_ID and APPLE_PASSWORD so the DMG opens on other Macs."
     fi
     echo "✅ DMG ready: ${DMG_PATH}"
+
+    # 5. Sparkle appcast, served from the repo root by GitHub Pages (SUFeedURL in Info.plist).
+    #    Signed with the EdDSA key in the login keychain, shared with the other ct106 apps.
+    SPARKLE_BIN="./Sparkle/bin"
+    if [ ! -x "${SPARKLE_BIN}/generate_appcast" ]; then
+        echo "⬇️ Downloading Sparkle tools..."
+        SPARKLE_URL=$(curl -s https://api.github.com/repos/sparkle-project/Sparkle/releases/latest \
+            | grep "browser_download_url" | grep "tar.xz" | head -n 1 | cut -d '"' -f 4)
+        [ -n "${SPARKLE_URL}" ] || { echo "❌ Could not find the Sparkle download."; exit 1; }
+        SPARKLE_TMP=$(mktemp -d)
+        curl -sL "${SPARKLE_URL}" | tar -xJ -C "${SPARKLE_TMP}"
+        mkdir -p Sparkle
+        cp -R "${SPARKLE_TMP}/bin" Sparkle/
+    fi
+    echo "📡 Generating appcast.xml..."
+    "${SPARKLE_BIN}/generate_appcast" -o appcast.xml \
+        --download-url-prefix "https://github.com/chentao1006/NotiForward/releases/download/v${NEW_VERSION}/" \
+        "${RESULT_DIR}"
+    # generate_appcast silently leaves out the EdDSA signature (which Sparkle requires) when the
+    # app lacks SUPublicEDKey or the keychain key is unavailable, so check for it.
+    if ! grep -A12 "<sparkle:version>${NEW_BUILD}</sparkle:version>" appcast.xml | grep -q "edSignature"; then
+        echo "❌ appcast.xml has no EdDSA signature for build ${NEW_BUILD}; Sparkle would reject the update."
+        exit 1
+    fi
 fi
 
-# 5. Mac App Store upload
+# 6. Mac App Store upload
 if [ "${APP_STORE}" = "true" ]; then
     APP_STORE_ARCHIVE="${RESULT_DIR}/NotiForwardAppStore.xcarchive"
     mkdir -p "${RESULT_DIR}"
@@ -175,7 +199,7 @@ if [ "${NOTARIZED}" != "true" ] && [ "${ALLOW_UNNOTARIZED:-0}" != "1" ]; then
     exit 1
 fi
 
-# 6. Commit, tag and push
+# 7. Commit, tag and push
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "⚠️ Not a git repository; skipping commit, tag and GitHub release."
     exit 0
@@ -188,7 +212,7 @@ BRANCH=$(git symbolic-ref --short HEAD)
 git push origin "${BRANCH}"
 git push -f origin "${TAG}"
 
-# 7. GitHub release
+# 8. GitHub release
 if command -v gh >/dev/null 2>&1; then
     echo "📡 Publishing GitHub release ${TAG}..."
     gh release delete "${TAG}" --yes 2>/dev/null || true

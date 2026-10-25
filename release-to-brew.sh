@@ -170,8 +170,8 @@ cask "$CASK_TOKEN" do
 
   url "$DOWNLOAD_URL"
   name "$APP_NAME"
-  desc "Forward selected Mac notifications to iPhone through Bark"
-  homepage "https://notiforward.ct106.com"
+  desc "Forward selected notifications to your iPhone through Bark"
+  homepage "https://notiforward.ct106.com/"
 
   depends_on macos: :sequoia
 

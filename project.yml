@@ -9,11 +9,15 @@ settings:
   base:
     DEVELOPMENT_TEAM: U2NEAJ73J2
     SWIFT_VERSION: "6.0"
-    CURRENT_PROJECT_VERSION: 4
-    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 5
+    MARKETING_VERSION: 1.1.0
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
     OTHER_LDFLAGS: "$(inherited) -lsqlite3"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
 targetTemplates:
   NotiForwardApp:
     type: application
@@ -21,23 +25,25 @@ targetTemplates:
     sources:
       - path: NotiForward
         excludes:
-          - Info.plist
+          - "Info*.plist"
           - "*.entitlements"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ct106.notiforward
         PRODUCT_NAME: NotiForward
-        INFOPLIST_FILE: NotiForward/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
         LOCALIZATION_PREFERS_STRING_CATALOGS: YES
         SWIFT_EMIT_LOC_STRINGS: YES
 targets:
-  # Direct download (Developer ID, notarized DMG).
+  # Direct download (Developer ID, notarized DMG), updated with Sparkle.
   NotiForward:
     templates: [NotiForwardApp]
+    dependencies:
+      - package: Sparkle
     settings:
       base:
+        INFOPLIST_FILE: NotiForward/Info.plist
         CODE_SIGN_ENTITLEMENTS: NotiForward/NotiForward.entitlements
     scheme:
       gatherCoverageData: false
@@ -48,6 +54,7 @@ targets:
     templates: [NotiForwardApp]
     settings:
       base:
+        INFOPLIST_FILE: NotiForward/InfoAppStore.plist
         CODE_SIGN_ENTITLEMENTS: NotiForward/NotiForwardAppStore.entitlements
         OTHER_SWIFT_FLAGS: "$(inherited) -D APP_STORE"
     scheme:

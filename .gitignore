@@ -10,3 +10,4 @@ xcuserdata/
 # Release output
 dist/
 *.log
+Sparkle/
