@@ -1,50 +1,103 @@
 # 知会 NotiForward
 
-[English](README.md)
+[English](README.md) · [官网](https://notiforward.ct106.com) · [隐私政策](https://notiforward.ct106.com/privacy.html)
 
-知会是一款 macOS 菜单栏应用，通过 [Bark](https://github.com/Finb/Bark) 把 Mac 上选定的通知转发到 iPhone。不需要配套的 iOS App，也没有自建中转服务器：在 iPhone 上装好 Bark，把设备 Token 粘贴进知会即可。
+知会是一款 macOS 菜单栏应用，通过 [Bark](https://bark.day.app) 把你选定的 Mac 通知转发到 iPhone。不需要配套的 iOS App，也没有自建服务器：在 iPhone 上装好 Bark，把设备 Token 粘贴进知会，再选好要转发的 App 即可。
+
+## 安装
+
+- **直接下载**：从 [Releases](https://github.com/chentao1006/NotiForward/releases/latest) 下载已公证的 DMG，或用 Homebrew：
+  ```sh
+  brew install --cask chentao1006/tap/notiforward
+  ```
+- **Mac App Store**：同一款应用，专业版功能通过 App 内购买解锁（见[版本区别](#版本区别)）。
+
+需要 macOS 15 或更高版本。
 
 ## 使用
 
 1. 在 iPhone 上安装 Bark。
-2. 打开知会。在配置好 Bark 之前，每次启动都会自动打开设置窗口。
+2. 打开知会。配置好 Bark 之前，设置窗口会打开在「客户端」页。
 3. 在第一个输入框中粘贴以下任意一种：
    - Bark 的**设备 Token**：知会会向服务器注册并保存返回的密钥；
    - Bark 服务器列表中的**密钥**；
    - 完整地址，如 `https://api.day.app/yourkey/`，会自动拆分出服务器和密钥。
-4. 点击「打开“完全磁盘访问权限”设置」，打开知会的开关。几秒内即开始转发，无需重启。
-5. 点击「发送测试通知」确认能收到。
+4. 在「通用 → 状态」中点击「授权访问…」并确认。面板会直接打开通知中心文件夹，这是知会唯一读取的文件夹。授权后几秒内即开始转发。
+5. 在「转发规则」中选择要转发的 App，再点「发送测试通知」确认能收到。
 
-如使用自建的 [bark-server](https://github.com/Finb/bark-server)，可在「高级 › 服务器」中填写。
+如使用自建的 [bark-server](https://github.com/Finb/bark-server)，可在「客户端 → 高级 → 服务器」中填写。
 
 ## 工作方式
 
-1. 每秒读取一次系统通知中心数据库。macOS 没有读取其他应用通知的公开接口，因此需要完全磁盘访问权限。
-2. 应用和关键词规则在本机执行，被过滤的通知不会离开 Mac。
-3. 通过规则的通知先进入本地 SQLite 队列，再发送到 `POST {server}/push`。标题为「应用 · 标题」，默认按应用分组。
-4. 发送失败的通知会留在队列中，按指数退避重试，间隔最长 1 分钟。超过 6 小时的通知直接丢弃，不补发；暂停期间到达的通知会被跳过。
+1. **读取**：通过内核文件事件监听通知中心数据库（`~/Library/Group Containers/group.com.apple.usernoted`），只在数据库变化时读取新记录，没有新通知时完全休眠；另有 60 秒一次的兜底检查，防止漏掉事件。读取权限来自用户在系统面板中授权的这一个文件夹（安全范围书签），不需要「完全磁盘访问权限」。
+2. **规则**：应用和关键词规则在本机执行，不符合规则的通知不会离开 Mac。
+3. **发送**：通过规则的通知先进入本地 SQLite 队列，再发送到 `POST {server}/push`。每条推送包含：
+   - 标题「应用 · 标题」，并按应用分组；
+   - 通过 Bundle ID 在 App Store 找到的应用图标；
+   - 由 Mac 应用的 URL Scheme 生成的点击链接（如 Telegram 的 `tg://`），在 iPhone 上点开即跳转到同一个 App。
+4. **重试**：发送失败的通知会留在队列中，按指数退避重试，间隔最长 1 分钟。超过 6 小时的通知直接丢弃，不补发；暂停期间到达的通知会被跳过。
+
+通知中心本身会在显示通知几秒后才把它写入数据库，所以推送通常比 Mac 上显示晚约 3–5 秒。
+
+## 版本区别
+
+| | 直接下载版 | App Store 免费版 | App Store 专业版 |
+|---|---|---|---|
+| 转发策略 | 白名单或黑名单 | 仅白名单 | 白名单或黑名单 |
+| 应用数量 | 不限 | 1 个 | 不限 |
+| 关键词过滤 | ✓ | – | ✓ |
+
+专业版可一次性买断（`com.ct106.notiforward.pro`），也可按月或按年订阅（`com.ct106.notiforward.pro.monthly`、`.pro.yearly`，放在同一个订阅群组里）。限制在转发环节执行（[ProLimits.swift](NotiForward/Models/ProLimits.swift)），不只是界面限制。已保存的规则会原样保留，升级后即恢复生效。
 
 ## 开发
 
 ```sh
-./test.sh               # 本地化检查 + 单元测试 + Release 构建，安装到 /Applications 并启动
+./test.sh               # 本地化检查、单元测试、App Store 版编译检查，然后 Release 构建，安装到 /Applications 并启动
 ./test.sh --no-install  # 只做检查和测试
-./release.sh 1.1.0      # 改版本号、测试、归档、Developer ID 导出、公证、打包 DMG、打 tag、发布 GitHub Release
-./release.sh 1.1.0 --no-publish   # 只打包 DMG
 ```
 
-每条通知的规则判定和每次发送都会写入系统日志。zsh 中 `log` 是内置命令，需写全路径：
+每条通知的规则判定、每次发送和读取事件都会写入系统日志。zsh 中 `log` 是内置命令，需写全路径：
 
 ```sh
 /usr/bin/log stream --info --predicate 'subsystem == "com.ct106.notiforward"'
 ```
 
-设置了 `APPLE_ID` 和 `APPLE_PASSWORD`（App 专用密码）时，`release.sh` 会自动公证。Xcode 工程由 `project.yml` 通过 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 生成，两个脚本都会自动重新生成。
-
 界面支持英语、简体中文、繁體中文、日本語、한국어、Deutsch、Français、Español、Italiano、Português (Brasil)，在设置中切换语言后立即生效。新增界面文字请用 `L("…")`；`scripts/localization.py check` 会检查每种语言是否都已翻译。
+
+## 发布
+
+```sh
+./release.sh 1.1.0                  # 直接下载版：发布到 GitHub 和 Homebrew
+./release.sh 1.1.0 --app-store      # 同时把 App Store 版上传到 App Store Connect
+./release.sh 1.1.0 --no-publish     # 只构建并公证 DMG
+```
+
+直接下载版的发布流程：
+
+1. 修改 `project.yml` 中的版本号并跑测试。
+2. 归档，用 Developer ID 导出，公证 App。
+3. 打包 DMG，公证并装订，再用 `stapler` 和 Gatekeeper 校验。
+4. 提交代码、打 tag、创建 GitHub Release，并通过 `release-to-brew.sh` 更新 `chentao1006/tap` 中的 cask。
+
+几点说明：
+
+- 公证需要设置 `APPLE_ID` 和 `APPLE_PASSWORD`（App 专用密码）。上传失败会自动重试；公证结果不是 `Accepted` 时会中止发布。
+- 未公证的 DMG 不会被发布，设置 `ALLOW_UNNOTARIZED=1` 可强制发布。
+- 设置 `SKIP_HOMEBREW_RELEASE=1` 可跳过 cask 更新。
+- `--app-store` 使用 Xcode 中登录的 Apple ID 上传，上传后需在 App Store Connect 中提交审核。
+
+首次提交 App Store 前，需在 App Store Connect 中完成以下设置（审核备注见英文 README）：
+
+- 创建上面列出的三个内购项目；
+- 将隐私政策网址设为 `https://notiforward.ct106.com/privacy.html`；
+- 填写 App 隐私：选「其他用户内容」，用途为「App 功能」，不关联用户、不用于追踪。
 
 ## 隐私
 
+- 开发者不收集任何数据，没有账号，也没有自建服务器。
 - 规则在本机执行，只有通过规则的通知会被发送。
 - 转发的内容会经过所配置的 Bark 服务器和 Apple 推送服务到达 iPhone。不希望经过 `api.day.app` 的话，请使用自建服务器。
-- 设置、Bark 密钥和待发送队列保存在 `~/Library/Application Support/NotiForward/noti-forward.sqlite`。
+- 应用图标通过 Bundle ID 在 Apple 的 App Store 查询服务中查找，不会发送任何通知内容。
+- 设置、Bark 密钥和待发送队列保存在应用的沙盒容器中。
+
+完整内容见[隐私政策](https://notiforward.ct106.com/privacy.html)。

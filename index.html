@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知会 NotiForward - 把 Mac 通知转发到 iPhone</title>
+    <meta name="description" content="NotiForward forwards the Mac notifications you choose to your iPhone through Bark. Rules run on your Mac, no account needed.">
+    <link rel="icon" href="icon_1024.png">
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="logo" href="#">
+                <img src="icon_1024.png" alt="">
+                <span data-i18n="app_name">知会</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features" data-i18n="nav_features">特性</a>
+                <a href="#how" data-i18n="nav_how">使用</a>
+                <a href="#privacy" data-i18n="nav_privacy">隐私</a>
+                <a class="github-button" href="https://github.com/chentao1006/NotiForward" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-show-count="true" aria-label="Star chentao1006/NotiForward on GitHub">Star</a>
+                <a href="https://github.com/chentao1006/NotiForward/releases/latest" class="btn btn-primary" data-i18n="nav_download">下载</a>
+                <button id="lang-toggle" class="btn-lang" type="button">EN</button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="badge" data-i18n="hero_badge">macOS 15+ · 通过 Bark 推送到 iPhone</div>
+                <h1 data-i18n="hero_title">Mac 上的通知，<br><span class="accent">在 iPhone 上也不错过</span></h1>
+                <p class="subtitle" data-i18n="hero_subtitle">知会是一款 macOS 菜单栏应用，把你选定的 Mac 通知通过 Bark 转发到 iPhone。规则在本机执行，无需注册账号，点开推送还能直接跳到 iPhone 上对应的 App。</p>
+                <div class="hero-btns">
+                    <a href="https://github.com/chentao1006/NotiForward/releases/latest" class="btn btn-large btn-primary" data-i18n="hero_download">下载知会</a>
+                    <a href="#how" class="btn btn-large btn-secondary" data-i18n="hero_more">如何使用</a>
+                </div>
+                <div class="brew">
+                    <span class="prompt">$</span>
+                    <code>brew install --cask chentao1006/tap/notiforward</code>
+                </div>
+            </div>
+            <div class="flow" aria-hidden="true">
+                <div class="mac-noti">
+                    <div class="noti-head"><span class="app-dot">T</span>Telegram</div>
+                    <div class="noti-title" data-i18n="mock_title">小明</div>
+                    <div class="noti-body" data-i18n="mock_body">今晚七点见？</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="phone">
+                    <div class="clock">9:41</div>
+                    <div class="mac-noti">
+                        <div class="noti-head"><span class="app-dot">T</span>Telegram</div>
+                        <div class="noti-title" data-i18n="mock_title_phone">Telegram · 小明</div>
+                        <div class="noti-body" data-i18n="mock_body">今晚七点见？</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="features_title">只转发你在意的</h2>
+                <p data-i18n="features_subtitle">离开 Mac 时，重要的消息照样第一时间送到手上。</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="icon">🎯</div>
+                    <h3 data-i18n="f1_title">按应用和关键词筛选</h3>
+                    <p data-i18n="f1_desc">只转发选定的 App，或排除不想要的；再用关键词精确过滤。规则全部在 Mac 本机执行。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">📲</div>
+                    <h3 data-i18n="f2_title">点开即跳转对应 App</h3>
+                    <p data-i18n="f2_desc">推送带上 App 的 URL Scheme，例如 Telegram 的 tg://，在 iPhone 上点一下就能打开。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🖼️</div>
+                    <h3 data-i18n="f3_title">保留应用图标</h3>
+                    <p data-i18n="f3_desc">自动从 App Store 找到来源 App 的图标，并按应用分组，一眼认出是谁发来的。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">⚡️</div>
+                    <h3 data-i18n="f4_title">事件驱动，几乎零耗电</h3>
+                    <p data-i18n="f4_desc">监听通知数据库的文件变化，有新通知才工作，平时完全休眠，不定时轮询。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🔒</div>
+                    <h3 data-i18n="f5_title">沙盒运行，最小权限</h3>
+                    <p data-i18n="f5_desc">只读取你授权的通知中心文件夹，不需要“完全磁盘访问权限”。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🌍</div>
+                    <h3 data-i18n="f6_title">10 种语言</h3>
+                    <p data-i18n="f6_desc">简体中文、繁體中文、English、日本語、한국어、Deutsch、Français、Español、Italiano、Português。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="how">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="how_title">三步开始使用</h2>
+                <p data-i18n="how_subtitle">无需注册，无需自建服务器。</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="num">1</div>
+                    <h3 data-i18n="s1_title">安装 Bark</h3>
+                    <p data-i18n="s1_desc">在 iPhone 上安装免费开源的 <a href="https://bark.day.app" target="_blank" rel="noopener"><u>Bark</u></a>，它负责接收推送。</p>
+                </div>
+                <div class="step">
+                    <div class="num">2</div>
+                    <h3 data-i18n="s2_title">粘贴设备 Token</h3>
+                    <p data-i18n="s2_desc">把 Bark 中的设备 Token、密钥或推送地址粘贴到知会，点「发送测试通知」确认能收到。</p>
+                </div>
+                <div class="step">
+                    <div class="num">3</div>
+                    <h3 data-i18n="s3_title">授权并选择应用</h3>
+                    <p data-i18n="s3_desc">授权读取通知中心文件夹，再在「转发规则」里选择要转发的 App，即可开始。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="privacy" class="privacy">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="privacy_title">你的通知，你做主</h2>
+            </div>
+            <ul>
+                <li data-i18n="p1"><strong>没有账号，也没有我们的服务器。</strong>开发者不收集任何数据。</li>
+                <li data-i18n="p2"><strong>规则在本机执行。</strong>不符合规则的通知不会离开你的 Mac。</li>
+                <li data-i18n="p3"><strong>服务器由你选择。</strong>默认使用 Bark 官方服务器，也可以换成自建的 bark-server。</li>
+            </ul>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-brand">
+                <img src="icon_1024.png" alt="">
+                <span data-i18n="app_name">知会</span>
+            </div>
+            <div class="footer-links">
+                <a href="privacy.html" data-i18n="footer_privacy">隐私政策</a>
+                <a href="https://github.com/chentao1006/NotiForward" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/chentao1006/NotiForward/issues" target="_blank" rel="noopener" data-i18n="footer_feedback">反馈</a>
+            </div>
+            <p class="footer-copy" data-i18n="footer_copy">&copy; 2026 知会 NotiForward</p>
+        </div>
+    </footer>
+
+    <script>
+        const i18n = {
+            zh: {
+                page_title: "知会 NotiForward - 把 Mac 通知转发到 iPhone",
+                app_name: "知会",
+                nav_features: "特性", nav_how: "使用", nav_privacy: "隐私", nav_download: "下载",
+                hero_badge: "macOS 15+ · 通过 Bark 推送到 iPhone",
+                hero_title: "Mac 上的通知，<br><span class=\"accent\">在 iPhone 上也不错过</span>",
+                hero_subtitle: "知会是一款 macOS 菜单栏应用，把你选定的 Mac 通知通过 Bark 转发到 iPhone。规则在本机执行，无需注册账号，点开推送还能直接跳到 iPhone 上对应的 App。",
+                hero_download: "下载知会", hero_more: "如何使用",
+                mock_title: "小明", mock_title_phone: "Telegram · 小明", mock_body: "今晚七点见？",
+                features_title: "只转发你在意的",
+                features_subtitle: "离开 Mac 时，重要的消息照样第一时间送到手上。",
+                f1_title: "按应用和关键词筛选", f1_desc: "只转发选定的 App，或排除不想要的；再用关键词精确过滤。规则全部在 Mac 本机执行。",
+                f2_title: "点开即跳转对应 App", f2_desc: "推送带上 App 的 URL Scheme，例如 Telegram 的 tg://，在 iPhone 上点一下就能打开。",
+                f3_title: "保留应用图标", f3_desc: "自动从 App Store 找到来源 App 的图标，并按应用分组，一眼认出是谁发来的。",
+                f4_title: "事件驱动，几乎零耗电", f4_desc: "监听通知数据库的文件变化，有新通知才工作，平时完全休眠，不定时轮询。",
+                f5_title: "沙盒运行，最小权限", f5_desc: "只读取你授权的通知中心文件夹，不需要“完全磁盘访问权限”。",
+                f6_title: "10 种语言", f6_desc: "简体中文、繁體中文、English、日本語、한국어、Deutsch、Français、Español、Italiano、Português。",
+                how_title: "三步开始使用", how_subtitle: "无需注册，无需自建服务器。",
+                s1_title: "安装 Bark", s1_desc: "在 iPhone 上安装免费开源的 <a href=\"https://bark.day.app\" target=\"_blank\" rel=\"noopener\"><u>Bark</u></a>，它负责接收推送。",
+                s2_title: "粘贴设备 Token", s2_desc: "把 Bark 中的设备 Token、密钥或推送地址粘贴到知会，点「发送测试通知」确认能收到。",
+                s3_title: "授权并选择应用", s3_desc: "授权读取通知中心文件夹，再在「转发规则」里选择要转发的 App，即可开始。",
+                privacy_title: "你的通知，你做主",
+                p1: "<strong>没有账号，也没有我们的服务器。</strong>开发者不收集任何数据。",
+                p2: "<strong>规则在本机执行。</strong>不符合规则的通知不会离开你的 Mac。",
+                p3: "<strong>服务器由你选择。</strong>默认使用 Bark 官方服务器，也可以换成自建的 bark-server。",
+                footer_privacy: "隐私政策", footer_feedback: "反馈",
+                footer_copy: "&copy; 2026 知会 NotiForward"
+            },
+            en: {
+                page_title: "NotiForward - Mac notifications on your iPhone",
+                app_name: "NotiForward",
+                nav_features: "Features", nav_how: "Get Started", nav_privacy: "Privacy", nav_download: "Download",
+                hero_badge: "macOS 15+ · Delivered to iPhone by Bark",
+                hero_title: "Your Mac notifications,<br><span class=\"accent\">on your iPhone too</span>",
+                hero_subtitle: "NotiForward is a menu bar app that forwards the Mac notifications you choose to your iPhone through Bark. Rules run on your Mac, no account needed, and tapping a push opens the matching iPhone app.",
+                hero_download: "Download NotiForward", hero_more: "How it works",
+                mock_title: "Alex", mock_title_phone: "Telegram · Alex", mock_body: "See you at 7 tonight?",
+                features_title: "Only what matters to you",
+                features_subtitle: "Step away from your Mac without missing the messages that count.",
+                f1_title: "Filter by app and keyword", f1_desc: "Forward only the apps you pick, or everything except a few, then narrow it down with keywords. All rules run on your Mac.",
+                f2_title: "Tap to open the app", f2_desc: "Pushes carry the app's URL scheme, such as tg:// for Telegram, so one tap opens it on your iPhone.",
+                f3_title: "Real app icons", f3_desc: "Icons are looked up on the App Store and pushes are grouped by app, so you see at a glance who it's from.",
+                f4_title: "Event-driven, near-zero energy", f4_desc: "Watches the notification database for changes and sleeps the rest of the time. No polling.",
+                f5_title: "Sandboxed, least privilege", f5_desc: "Reads only the Notification Center folder you grant. No Full Disk Access needed.",
+                f6_title: "10 languages", f6_desc: "English, 简体中文, 繁體中文, 日本語, 한국어, Deutsch, Français, Español, Italiano, Português.",
+                how_title: "Three steps to start", how_subtitle: "No sign-up, no server to run.",
+                s1_title: "Install Bark", s1_desc: "Get the free, open-source <a href=\"https://bark.day.app\" target=\"_blank\" rel=\"noopener\"><u>Bark</u></a> app on your iPhone to receive the pushes.",
+                s2_title: "Paste your device token", s2_desc: "Paste the device token, key or push URL from Bark into NotiForward, then send a test notification.",
+                s3_title: "Grant access, pick apps", s3_desc: "Grant access to the Notification Center folder and choose the apps to forward under Forwarding Rules.",
+                privacy_title: "Your notifications, your call",
+                p1: "<strong>No account, and no server of ours.</strong> The developer collects no data.",
+                p2: "<strong>Rules run on your Mac.</strong> Notifications that don't match never leave it.",
+                p3: "<strong>You choose the server.</strong> Bark's public server by default, or your own bark-server.",
+                footer_privacy: "Privacy Policy", footer_feedback: "Feedback",
+                footer_copy: "&copy; 2026 NotiForward / 知会"
+            }
+        };
+
+        const toggle = document.getElementById("lang-toggle");
+        function setLanguage(lang) {
+            const strings = i18n[lang];
+            document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+            document.title = strings.page_title;
+            document.querySelectorAll("[data-i18n]").forEach(el => {
+                const value = strings[el.dataset.i18n];
+                if (value !== undefined) el.innerHTML = value;
+            });
+            toggle.textContent = lang === "zh" ? "EN" : "中文";
+            try { localStorage.setItem("lang", lang); } catch (e) {}
+        }
+        let saved = null;
+        try { saved = localStorage.getItem("lang"); } catch (e) {}
+        const initial = saved || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en");
+        setLanguage(initial);
+        toggle.addEventListener("click", () => setLanguage(document.documentElement.lang === "en" ? "zh" : "en"));
+    </script>
+</body>
+</html>

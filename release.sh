@@ -9,7 +9,9 @@
 #   --app-store   also archive the NotiForwardAppStore target and upload it to
 #                 App Store Connect (uses the Apple ID signed in to Xcode)
 #
-# Notarization needs APPLE_ID and APPLE_PASSWORD (an app-specific password).
+# Notarization needs APPLE_ID and APPLE_PASSWORD (an app-specific password). Publishing an
+# un-notarized build is refused, since Gatekeeper would block it; ALLOW_UNNOTARIZED=1 overrides.
+# After the GitHub release, the Homebrew cask is updated (SKIP_HOMEBREW_RELEASE=1 skips it).
 
 set -eo pipefail
 cd "$(dirname "$0")"
@@ -46,16 +48,35 @@ echo "----------------------------------------"
 echo "Current Version: ${CURRENT_VERSION} (Build ${CURRENT_BUILD})"
 echo "----------------------------------------"
 
+# Apple's notary upload occasionally times out on a flaky connection with nothing wrong with the
+# artifact, so retry a few times. `--wait` can exit 0 for an Invalid submission, so check the status.
 notarize() {
-    local path="$1"
-    xcrun notarytool submit "${path}" \
-        --apple-id "${APPLE_ID}" --password "${APPLE_PASSWORD}" --team-id "${TEAM_ID}" --wait
+    local path="$1" attempt output
+    for attempt in 1 2 3; do
+        echo "🔐 Submitting $(basename "${path}") for notarization (attempt ${attempt}/3)..."
+        if output=$(xcrun notarytool submit "${path}" \
+            --apple-id "${APPLE_ID}" --password "${APPLE_PASSWORD}" --team-id "${TEAM_ID}" --wait 2>&1); then
+            echo "${output}" | tail -3
+            if echo "${output}" | grep -q "status: Accepted"; then
+                return 0
+            fi
+            echo "❌ Notarization was not accepted. Inspect it with: xcrun notarytool log <submission-id>"
+            return 1
+        fi
+        echo "${output}" | tail -3
+        [ "${attempt}" -lt 3 ] && { echo "⚠️ Submission failed, retrying in 30s..."; sleep 30; }
+    done
+    echo "❌ notarytool submit failed after 3 attempts."
+    return 1
 }
+
+NOTARIZED=false
 
 if [ "${SKIP_BUILD}" = "true" ]; then
     NEW_VERSION="${NEW_VERSION:-$CURRENT_VERSION}"
     NEW_BUILD="${CURRENT_BUILD}"
     [ -f "${DMG_PATH}" ] || { echo "❌ ${DMG_PATH} not found"; exit 1; }
+    xcrun stapler validate "${DMG_PATH}" >/dev/null 2>&1 && NOTARIZED=true
     echo "⏩ Skipping build, releasing ${NEW_VERSION} (Build ${NEW_BUILD})."
 else
     [ -n "${NEW_VERSION}" ] || read -r -p "Enter NEW Version (Current: ${CURRENT_VERSION}): " NEW_VERSION
@@ -113,7 +134,10 @@ else
         echo "🔐 Notarizing DMG..."
         notarize "${DMG_PATH}"
         xcrun stapler staple "${DMG_PATH}"
-        echo "✅ Notarized."
+        xcrun stapler validate "${DMG_PATH}"
+        spctl --assess --type execute --verbose "${EXPORTED_APP}"
+        NOTARIZED=true
+        echo "✅ Notarized and accepted by Gatekeeper."
     else
         echo "⚠️ Notarization skipped: set APPLE_ID and APPLE_PASSWORD so the DMG opens on other Macs."
     fi
@@ -139,6 +163,12 @@ fi
 
 [ "${PUBLISH}" = "true" ] || { echo "🎉 Done (not published)."; exit 0; }
 
+if [ "${NOTARIZED}" != "true" ] && [ "${ALLOW_UNNOTARIZED:-0}" != "1" ]; then
+    echo "❌ Refusing to publish an un-notarized DMG: Gatekeeper would block it for users."
+    echo "   Set APPLE_ID and APPLE_PASSWORD, or ALLOW_UNNOTARIZED=1 to publish anyway."
+    exit 1
+fi
+
 # 6. Commit, tag and push
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "⚠️ Not a git repository; skipping commit, tag and GitHub release."
@@ -159,7 +189,14 @@ if command -v gh >/dev/null 2>&1; then
     gh release create "${TAG}" "${DMG_PATH}" \
         --title "${APP_NAME} ${NEW_VERSION}" \
         --notes "Release ${NEW_VERSION} (Build ${NEW_BUILD})"
-    echo "🎉 Release completed!"
+    echo "🎉 GitHub release completed!"
+    if [ "${SKIP_HOMEBREW_RELEASE:-0}" = "1" ]; then
+        echo "⏭️ Skipping Homebrew because SKIP_HOMEBREW_RELEASE=1."
+    else
+        echo "🍺 Updating Homebrew cask..."
+        ./release-to-brew.sh "${DMG_PATH}" "${NEW_VERSION}"
+        echo "🍺 Install with: brew install --cask chentao1006/tap/notiforward"
+    fi
 else
     echo "⚠️ GitHub CLI (gh) not found. Upload ${DMG_PATH} to the ${TAG} release manually."
 fi
