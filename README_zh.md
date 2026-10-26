@@ -10,7 +10,7 @@
   ```sh
   brew install --cask chentao1006/tap/notiforward
   ```
-- **Mac App Store**：同一款应用，专业版功能通过 App 内购买解锁（见[版本区别](#版本区别)）。
+- **Mac App Store**：同一款应用，包含全部功能。
 
 需要 macOS 15 或更高版本。
 
@@ -38,16 +38,6 @@
 4. **重试**：发送失败的通知会留在队列中，按指数退避重试，间隔最长 1 分钟。超过 6 小时的通知直接丢弃，不补发；暂停期间到达的通知会被跳过。
 
 通知中心本身会在显示通知几秒后才把它写入数据库，所以推送通常比 Mac 上显示晚约 3–5 秒。
-
-## 版本区别
-
-| | 直接下载版 | App Store 免费版 | App Store 专业版 |
-|---|---|---|---|
-| 转发策略 | 白名单或黑名单 | 仅白名单 | 白名单或黑名单 |
-| 应用数量 | 不限 | 1 个 | 不限 |
-| 关键词过滤 | ✓ | – | ✓ |
-
-专业版可一次性买断（`com.ct106.notiforward.pro`），也可按月或按年订阅（`com.ct106.notiforward.pro.monthly`、`.pro.yearly`，放在同一个订阅群组里）。限制在转发环节执行（[ProLimits.swift](NotiForward/Models/ProLimits.swift)），不只是界面限制。已保存的规则会原样保留，升级后即恢复生效。
 
 ## 开发
 
@@ -88,7 +78,6 @@
 
 首次提交 App Store 前，需在 App Store Connect 中完成以下设置（审核备注见英文 README）：
 
-- 创建上面列出的三个内购项目；
 - 将隐私政策网址设为 `https://notiforward.ct106.com/privacy.html`；
 - 填写 App 隐私：「其他用户内容」用于「App 功能」，「产品交互」用于「分析」；两者均不关联用户、不用于追踪。这与 App 及 Aptabase 的隐私清单一致。
 

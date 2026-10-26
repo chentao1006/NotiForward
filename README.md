@@ -10,7 +10,7 @@ NotiForward (知会) is a macOS menu bar app that forwards the Mac notifications
   ```sh
   brew install --cask chentao1006/tap/notiforward
   ```
-- **Mac App Store**: the same app, with Pro features sold in-app (see [Editions](#editions)).
+- **Mac App Store**: the same app, with every feature included.
 
 Requires macOS 15 or later.
 
@@ -39,16 +39,6 @@ A self-hosted [bark-server](https://github.com/Finb/bark-server) can be set unde
 
 Notification Center itself commits a new notification to its database a few seconds after showing it, so pushes arrive about 3–5 seconds after the Mac shows the notification.
 
-## Editions
-
-| | Direct download | App Store, free | App Store, Pro |
-|---|---|---|---|
-| Forwarding strategy | Allow or block list | Allow list only | Allow or block list |
-| Apps | Unlimited | 1 | Unlimited |
-| Keyword filtering | ✓ | – | ✓ |
-
-Pro is a one-time purchase (`com.ct106.notiforward.pro`) or a monthly/yearly subscription (`com.ct106.notiforward.pro.monthly`, `.pro.yearly`, in one subscription group). The limits are enforced where forwarding happens ([ProLimits.swift](NotiForward/Models/ProLimits.swift)), not just in the UI. Saved rules are kept as they are, so they come back after upgrading.
-
 ## Project layout
 
 ```
@@ -57,8 +47,7 @@ NotiForward/
   Capture/        database reader, change monitor, folder access, app catalog
   Forwarding/     Bark client, rule engine, delivery queue, icon lookup
   Storage/        SQLite settings and queue
-  Models/         settings, notification models, Pro limits
-  Store/          StoreKit purchases (App Store build)
+  Models/         settings, notification models
   Localization/   runtime language switching (L())
   Views/          menu and settings UI
   Resources/      assets, string catalogs, privacy manifest
@@ -70,7 +59,7 @@ index.html, index.css, privacy.html, CNAME   website (GitHub Pages)
 project.yml       XcodeGen spec (source of truth for NotiForward.xcodeproj)
 ```
 
-There are two app targets built from the same sources. `NotiForward` is the direct download and is always fully unlocked. `NotiForwardAppStore` is built with `-D APP_STORE`, which enables StoreKit and leaves out the code that needs a temporary-exception entitlement.
+There are two app targets built from the same sources. `NotiForward` is the direct download, with Sparkle updates. `NotiForwardAppStore` is built with `-D APP_STORE`, which leaves out Sparkle and the code that needs a temporary-exception entitlement.
 
 ## Development
 
@@ -108,7 +97,6 @@ The direct release bumps the version in `project.yml` and runs the tests. It the
 
 Before the first submission, in App Store Connect:
 
-- Create the three in-app purchases listed under [Editions](#editions).
 - Set the privacy policy URL to `https://notiforward.ct106.com/privacy.html`.
 - Fill in App Privacy: **Other User Content** for App Functionality and **Product Interaction** for Analytics; neither is linked to the user or used for tracking. This matches the app and Aptabase privacy manifests.
 

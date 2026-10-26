@@ -8,7 +8,7 @@ import ServiceManagement
 final class AppModel {
     enum CaptureStatus: Equatable { case starting, running, permissionRequired, failed(String) }
     enum TestStatus: Equatable { case idle, sending, succeeded, failed(String) }
-    enum SettingsTab: Hashable { case general, rules, client, pro }
+    enum SettingsTab: Hashable { case general, rules, client }
 
     var general = GeneralSettings()
     var rules = RuleConfiguration.initial
@@ -23,7 +23,6 @@ final class AppModel {
     var settingsTab: SettingsTab = AppModel.isBarkConfigured ? .general : .client
 
     let language = LanguageBundle.shared
-    let purchases = PurchaseService()
 #if !APP_STORE
     let updater = Updater()
 #endif
@@ -42,11 +41,6 @@ final class AppModel {
     static var isBarkConfigured: Bool { UserDefaults.standard.bool(forKey: "barkConfigured") }
 
     var isForwarding: Bool { captureStatus == .running && !isPaused && general.bark.isConfigured }
-    var isPro: Bool { purchases.isPro }
-    /// The rules forwarding actually uses, after free-tier limits.
-    var effectiveRules: RuleConfiguration { ProLimits.effectiveRules(rules, isPro: isPro) }
-
-    func showPro() { settingsTab = .pro }
 
     func start() async {
         guard !hasStarted else { return }
@@ -60,9 +54,7 @@ final class AppModel {
             language.apply(general.language)
             UserDefaults.standard.set(general.bark.isConfigured, forKey: "barkConfigured")
             registerIfNeeded()
-            purchases.onChange = { [weak self] in self?.applyRules() }
-            purchases.start()
-            let coordinator = ForwardCoordinator(store: store, settings: general, rules: effectiveRules)
+            let coordinator = ForwardCoordinator(store: store, settings: general, rules: rules)
             self.coordinator = coordinator
             monitorTask?.cancel()
             monitorTask = Task { [weak self] in await self?.runCapture(store: store, coordinator: coordinator) }
@@ -151,18 +143,12 @@ final class AppModel {
         UserDefaults.standard.set(general.bark.isConfigured, forKey: "barkConfigured")
         guard let store else { return }
         rules.updatedAt = Date()
-        let general = general, rules = rules, effective = effectiveRules
+        let general = general, rules = rules
         Task {
             try? await store.save(general: general)
             try? await store.save(rules: rules)
-            await coordinator?.update(settings: general, rules: effective)
+            await coordinator?.update(settings: general, rules: rules)
         }
-    }
-
-    /// Re-applies limits after the Pro entitlement changes (purchase, refund, expiry).
-    private func applyRules() {
-        let general = general, effective = effectiveRules
-        Task { await coordinator?.update(settings: general, rules: effective) }
     }
 
     /// Accepts a device token, a bare key or a full Bark URL pasted from the iPhone app.

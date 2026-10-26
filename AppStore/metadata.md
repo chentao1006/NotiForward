@@ -54,15 +54,11 @@ Screenshots: `AppStore/screenshots/<zh-Hans|en>/<size>/01–05.png`. Every Mac s
 2. 把 Bark 的设备 Token、密钥或推送地址粘贴到知会
 3. 授权读取通知中心文件夹，选择要转发的 App
 
-免费版与专业版
-免费版可转发一个 App 的通知（白名单方式）。专业版解锁：转发任意多个 App、黑名单方式（除所选应用外全部转发）、关键词过滤。专业版可一次性买断，也可按月或按年订阅。
-
 关于 Bark
 知会通过 Bark 接收推送。转发的通知会经过你设置的 Bark 服务器（默认为 Bark 官方服务器），也可以改用自建的 bark-server。
 
 支持 10 种语言：简体中文、繁體中文、English、日本語、한국어、Deutsch、Français、Español、Italiano、Português。
 
-使用条款：https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 隐私政策：https://notiforward.ct106.com/privacy.html
 
 **此版本的新内容**
@@ -107,15 +103,11 @@ SET UP IN A MINUTE
 2. Paste Bark's device token, key or push URL into NotiForward
 3. Grant access to the Notification Center folder and pick your apps
 
-FREE AND PRO
-The free version forwards notifications from one app, as an allow list. Pro unlocks any number of apps, block lists (forward everything except selected apps) and keyword filtering. Pro is available as a one-time purchase or as a monthly or yearly subscription.
-
 ABOUT BARK
 NotiForward delivers pushes through Bark. Forwarded notifications pass through the Bark server you configure (Bark's public server by default), or your own self-hosted bark-server.
 
 Available in 10 languages: English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, Spanish, Italian and Portuguese.
 
-Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Privacy Policy: https://notiforward.ct106.com/privacy.html
 
 **What's New**
@@ -123,22 +115,8 @@ NotiForward's first release on the Mac App Store.
 
 ---
 
-## In-app purchases
-
-Subscription group reference name: **NotiForward Pro**. Group display name: 知会专业版 / NotiForward Pro.
-
-| Product ID | Type | 显示名称（zh-Hans） | 描述（zh-Hans） | Display name (en) | Description (en) |
-|---|---|---|---|---|---|
-| `com.ct106.notiforward.pro` | Non-consumable | 知会专业版（永久） | 一次购买，永久解锁全部专业版功能 | NotiForward Pro (Lifetime) | Unlock every Pro feature, once and for all |
-| `com.ct106.notiforward.pro.monthly` | Auto-renewable, 1 month | 知会专业版（月度） | 无限应用、黑名单与关键词过滤 | NotiForward Pro (Monthly) | Unlimited apps, block lists and keywords |
-| `com.ct106.notiforward.pro.yearly` | Auto-renewable, 1 year | 知会专业版（年度） | 无限应用、黑名单与关键词过滤 | NotiForward Pro (Yearly) | Unlimited apps, block lists and keywords |
-
-In-app purchase review screenshot: `screenshots/<lang>/1280x800/02.png` (Forwarding Rules, which the purchase unlocks).
-
----
-
 ## App Review notes
 
 > NotiForward forwards notifications the user chooses from their Mac to their own iPhone through Bark, a free open-source push app. To read notifications, the user selects the Notification Center data folder (~/Library/Group Containers/group.com.apple.usernoted) once in a standard open panel; the app keeps a read-only security-scoped bookmark to that folder and accesses nothing else. Filtering rules run on the Mac, and only matching notifications are sent, over HTTPS, to the Bark server the user configures.
 >
-> To test: install Bark on an iPhone, paste its device key in Settings → Client, grant folder access in Settings → General (Grant Access…), choose an app in Forwarding Rules, and click Send Test Notification. The free version forwards one app; Pro (in-app purchase) unlocks more apps, block lists and keyword filtering.
+> To test: install Bark on an iPhone, paste its device key in Settings → Client, grant folder access in Settings → General (Grant Access…), choose an app in Forwarding Rules, and click Send Test Notification.

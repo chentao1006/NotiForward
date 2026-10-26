@@ -12,37 +12,22 @@ struct RulesSettingsView: View {
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Free users can only allow-list; picking the block list opens the Pro tab instead.
-    private var appMode: Binding<AppFilterMode> {
-        Binding(
-            get: { model.effectiveRules.appMode },
-            set: { mode in
-                guard model.isPro || mode == .onlyAllowed else { return model.showPro() }
-                model.rules.appMode = mode
-                model.saveSettings()
-            }
-        )
-    }
-
     var body: some View {
         Form {
             Section {
-                Picker(L("Forwarding strategy"), selection: appMode) {
+                Picker(L("Forwarding strategy"), selection: $model.rules.appMode) {
                     Text(L("Only forward selected apps")).tag(AppFilterMode.onlyAllowed)
-                    Text(model.isPro ? L("Forward all except selected apps") : L("Forward all except selected apps (Pro)"))
-                        .tag(AppFilterMode.allExceptBlocked)
+                    Text(L("Forward all except selected apps")).tag(AppFilterMode.allExceptBlocked)
                 }
+                .onChange(of: model.rules.appMode) { _, _ in model.saveSettings() }
                 if selectedApps.isEmpty {
                     Text(L("No apps selected."))
                         .foregroundStyle(.secondary)
                 } else {
-                    let freeApps = ProLimits.freeApps(in: model.rules)
                     ForEach(selectedApps) { app in
-                        let isLimited = !model.isPro && !freeApps.contains(app.bundleID)
                         HStack(spacing: 10) {
                             AppIconView(app: app, size: 22)
                             Text(app.name)
-                            if isLimited { ProBadge() }
                             Spacer()
                             Button {
                                 model.rules.appBundleIDs.remove(app.bundleID)
@@ -53,13 +38,9 @@ struct RulesSettingsView: View {
                             .buttonStyle(.borderless)
                             .help(L("Remove"))
                         }
-                        .opacity(isLimited ? 0.5 : 1)
                     }
                 }
                 HStack {
-                    if !model.isPro {
-                        Button(L("Upgrade to Pro")) { model.showPro() }
-                    }
                     Spacer()
                     Button(L("Choose Apps…")) { isChoosingApps = true }
                 }
@@ -67,9 +48,7 @@ struct RulesSettingsView: View {
                 Text(L("Apps"))
             } footer: {
                 Group {
-                    if !model.isPro {
-                        Text(L("The free version forwards notifications from one app."))
-                    } else if model.rules.appMode == .allExceptBlocked {
+                    if model.rules.appMode == .allExceptBlocked {
                         Text(L("Notifications from these apps are not forwarded."))
                     } else {
                         Text(L("Only notifications from these apps are forwarded."))
@@ -97,19 +76,8 @@ struct RulesSettingsView: View {
                 }
                 .disabled(!model.rules.keywordFilteringEnabled)
             } header: {
-                HStack(spacing: 6) {
-                    Text(L("Keywords"))
-                    if !model.isPro { ProBadge() }
-                }
-            } footer: {
-                if !model.isPro {
-                    HStack {
-                        Text(L("Keyword filtering is a Pro feature.")).font(.caption).foregroundStyle(.secondary)
-                        Button(L("Upgrade to Pro")) { model.showPro() }.controlSize(.small)
-                    }
-                }
+                Text(L("Keywords"))
             }
-            .disabled(!model.isPro)
         }
         .formStyle(.grouped)
         .sheet(isPresented: $isChoosingApps) { AppPickerView(model: model) }
@@ -138,16 +106,7 @@ private struct AppPickerView: View {
             .padding(.vertical, 6)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
 
-            if !model.isPro {
-                HStack(spacing: 6) {
-                    Text(L("The free version forwards notifications from one app.")).font(.caption).foregroundStyle(.secondary)
-                    ProBadge()
-                    Spacer()
-                }
-            }
-
             List(filteredApps) { app in
-                let isSelected = model.rules.appBundleIDs.contains(app.bundleID)
                 Toggle(isOn: binding(for: app.bundleID)) {
                     HStack(spacing: 10) {
                         AppIconView(app: app, size: 28)
@@ -159,7 +118,6 @@ private struct AppPickerView: View {
                 }
                 .toggleStyle(.checkbox)
                 .padding(.vertical, 2)
-                .disabled(!model.isPro && !isSelected && model.rules.appBundleIDs.count >= ProLimits.freeAppCount)
             }
             .listStyle(.bordered)
             .alternatingRowBackgrounds()

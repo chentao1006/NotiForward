@@ -15,11 +15,6 @@ struct SettingsView: View {
             ClientSettingsView(model: model)
                 .tabItem { Label(L("Client"), systemImage: "iphone") }
                 .tag(AppModel.SettingsTab.client)
-#if APP_STORE
-            ProSettingsView(model: model)
-                .tabItem { Label(L("Pro"), systemImage: "sparkles") }
-                .tag(AppModel.SettingsTab.pro)
-#endif
         }
         .id(model.language.language)
         .task { await model.start() }

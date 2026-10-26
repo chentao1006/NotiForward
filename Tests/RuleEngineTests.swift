@@ -41,17 +41,3 @@ import Testing
         #expect(RuleEngine.evaluate(notification(body: "Hello"), rules: rules) == .blockedByKeyword)
     }
 }
-
-@Suite struct ProLimitsTests {
-    @Test func freeTierAllowsOneAppAndNoKeywords() {
-        var rules = RuleConfiguration.initial
-        rules.appMode = .allExceptBlocked
-        rules.appBundleIDs = ["com.b.app", "com.a.app"]
-        rules.keywordFilteringEnabled = true
-        let limited = ProLimits.effectiveRules(rules, isPro: false)
-        #expect(limited.appMode == .onlyAllowed)
-        #expect(limited.appBundleIDs == ["com.a.app"])
-        #expect(!limited.keywordFilteringEnabled)
-        #expect(ProLimits.effectiveRules(rules, isPro: true) == rules)
-    }
-}

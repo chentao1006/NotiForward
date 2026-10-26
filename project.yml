@@ -73,7 +73,6 @@ targets:
       # Pure logic is compiled straight into the test bundle, so tests run without launching the app.
       - path: NotiForward/Models/Models.swift
       - path: NotiForward/Forwarding/RuleEngine.swift
-      - path: NotiForward/Models/ProLimits.swift
       - path: NotiForward/Forwarding/BarkClient.swift
       - path: NotiForward/Localization/LanguageBundle.swift
     settings:
