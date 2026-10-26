@@ -110,7 +110,7 @@ Before the first submission, in App Store Connect:
 
 - Create the three in-app purchases listed under [Editions](#editions).
 - Set the privacy policy URL to `https://notiforward.ct106.com/privacy.html`.
-- Fill in App Privacy: **Other User Content**, used for App Functionality, not linked to the user, not used for tracking. This matches `PrivacyInfo.xcprivacy`.
+- Fill in App Privacy: **Other User Content** for App Functionality and **Product Interaction** for Analytics; neither is linked to the user or used for tracking. This matches the app and Aptabase privacy manifests.
 
 Suggested review notes:
 
@@ -118,7 +118,7 @@ Suggested review notes:
 
 ## Privacy
 
-- The developer collects no data, and there is no account or server of ours.
+- There is no account, advertising, or cross-app tracking. Aptabase receives anonymous product-interaction events and standard technical context, but never notification content, Bark credentials, app bundle identifiers, or rule keywords.
 - Rules run on the Mac; only notifications that pass them are sent.
 - Forwarded text goes to the configured Bark server and through Apple's push service to the iPhone. Use a self-hosted server if you don't want it to pass through `api.day.app`.
 - App icons are looked up by bundle ID on Apple's App Store lookup service; no notification content is sent there.
