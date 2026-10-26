@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		03EFC120B12AA8A5197F9DED /* MenuContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C656C76FFA3BAA832E6132B /* MenuContentView.swift */; };
 		07266D7E901E8C78D0E618A5 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E062B10F6DC4B25226B011CF /* RuleEngine.swift */; };
+		072ED764A7A76099A194CE86 /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64A51F71FCCF4883F93646F0 /* AnalyticsManager.swift */; };
 		0D955F003A81245FBDC27585 /* BarkClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EE9383E90B9F150FF3C5A7 /* BarkClient.swift */; };
 		17B0A105FD6473671897886A /* ProLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C9AB0CB0FC8B7A4811F33E /* ProLimits.swift */; };
 		1822289CCE05ECC5BB959422 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230E5A649F5D44AEE0A484C7 /* GeneralSettingsView.swift */; };
@@ -28,6 +29,7 @@
 		430D4839FBB9100CCA30B444 /* ProLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C9AB0CB0FC8B7A4811F33E /* ProLimits.swift */; };
 		43E44E278D5024D396FEEB33 /* LanguageBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0782D1BF44AE5F9468645DBF /* LanguageBundle.swift */; };
 		46486A205803575939A27EC5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B8F5CB74C4C4106BFFA2BD47 /* Localizable.xcstrings */; };
+		46AB91203BED9329AEA13B08 /* Aptabase in Frameworks */ = {isa = PBXBuildFile; productRef = 92AC13410D456B71F4A76F10 /* Aptabase */; };
 		4DD5E089923FD433D035F2A1 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E006E69817F8870AFD957F /* Log.swift */; };
 		529594DCA1D87E20570B0792 /* ForwardCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4674D5D3DC536D40D05C5757 /* ForwardCoordinator.swift */; };
 		5440B0CC258B489FC80BEB97 /* BarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99D2679F0737548159AF732A /* BarkTests.swift */; };
@@ -40,7 +42,7 @@
 		6820E7F8017FCEDA134F9F1D /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BD178F07EC3A420AFF14993 /* Models.swift */; };
 		6C5E04CABFDBD64AB99F1335 /* RulesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292073D48FEC8D13B8E458F5 /* RulesSettingsView.swift */; };
 		6DDD50BD94018393338A8F47 /* ClientSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9514A3BF85F6F71EC90E2305 /* ClientSettingsView.swift */; };
-		754A716A5CBC566E1C0842F2 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4DACF3D6AA785904CA06054B /* Sparkle */; };
+		754A716A5CBC566E1C0842F2 /* Aptabase in Frameworks */ = {isa = PBXBuildFile; productRef = 2A61FA31726D46E27D9E05D0 /* Aptabase */; };
 		77703AACAD09EB60FC29760C /* NotificationDatabaseReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B5977906E6D68452BB3A14 /* NotificationDatabaseReader.swift */; };
 		802FE708998F2D590D25B801 /* RuleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E062B10F6DC4B25226B011CF /* RuleEngine.swift */; };
 		81210889A2AD6B224D898032 /* ProSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336109ED82280160975A8FAB /* ProSettingsView.swift */; };
@@ -57,10 +59,12 @@
 		AD7D733F570A910EC93C8AEF /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AA71DD5679DF691C78368FD /* PurchaseService.swift */; };
 		AFA7C4F3AC0902FB86B1B296 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A630E2723C34975201FC67C0 /* PrivacyInfo.xcprivacy */; };
 		B5A3208408B39CB6B2E277AF /* NotiForwardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B20E824ADDD85D90D71F867 /* NotiForwardApp.swift */; };
+		B796FFF53658723EACB20408 /* AnalyticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64A51F71FCCF4883F93646F0 /* AnalyticsManager.swift */; };
 		BCC998448842E6EA8EEE2C64 /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E29F6BE9A06502EF80909A97 /* LocalStore.swift */; };
 		BCCD00C00D8A484C138FAEE7 /* AppIconLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0BF518AA1558EB724EDB26 /* AppIconLookup.swift */; };
 		CBA53583BDEC3641DB4469B7 /* AppIconLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0BF518AA1558EB724EDB26 /* AppIconLookup.swift */; };
 		CF1F24BB51A389209638F6F1 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8524C939306C66A64E69939A /* InfoPlist.xcstrings */; };
+		CF68AC4A6BC33C5BE88B957D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4DACF3D6AA785904CA06054B /* Sparkle */; };
 		D00504C361493701601D08D1 /* NotificationDatabaseReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B5977906E6D68452BB3A14 /* NotificationDatabaseReader.swift */; };
 		D4460E50BBF43F23BE349FB2 /* ProSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336109ED82280160975A8FAB /* ProSettingsView.swift */; };
 		DE5B292D4E89A1ADF039924C /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 230E5A649F5D44AEE0A484C7 /* GeneralSettingsView.swift */; };
@@ -88,6 +92,7 @@
 		51A76DF583B68E5336179AA1 /* RuleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleEngineTests.swift; sourceTree = "<group>"; };
 		5BD178F07EC3A420AFF14993 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		5C656C76FFA3BAA832E6132B /* MenuContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContentView.swift; sourceTree = "<group>"; };
+		64A51F71FCCF4883F93646F0 /* AnalyticsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsManager.swift; sourceTree = "<group>"; };
 		72B5977906E6D68452BB3A14 /* NotificationDatabaseReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDatabaseReader.swift; sourceTree = "<group>"; };
 		8524C939306C66A64E69939A /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		9514A3BF85F6F71EC90E2305 /* ClientSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientSettingsView.swift; sourceTree = "<group>"; };
@@ -107,11 +112,20 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		01F7CCBD0388987817069CA7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				46AB91203BED9329AEA13B08 /* Aptabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5D4E39E7ED3CD390027D99D4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				754A716A5CBC566E1C0842F2 /* Sparkle in Frameworks */,
+				754A716A5CBC566E1C0842F2 /* Aptabase in Frameworks */,
+				CF68AC4A6BC33C5BE88B957D /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +259,7 @@
 		E693435333CAFFD1B542DB97 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				64A51F71FCCF4883F93646F0 /* AnalyticsManager.swift */,
 				E4AB008A0E2E072AF533154C /* AppModel.swift */,
 				9B20E824ADDD85D90D71F867 /* NotiForwardApp.swift */,
 				40EB7ECCA2A5F320890C88BB /* Updater.swift */,
@@ -261,6 +276,7 @@
 			buildPhases = (
 				82B3DB039E2AA5449DE261CA /* Sources */,
 				9414D6FFF1ED69E7226FC48A /* Resources */,
+				01F7CCBD0388987817069CA7 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -268,6 +284,7 @@
 			);
 			name = NotiForwardAppStore;
 			packageProductDependencies = (
+				92AC13410D456B71F4A76F10 /* Aptabase */,
 			);
 			productName = NotiForwardAppStore;
 			productReference = FCD94DDA3F61833E01548015 /* NotiForwardAppStore.app */;
@@ -287,6 +304,7 @@
 			);
 			name = NotiForward;
 			packageProductDependencies = (
+				2A61FA31726D46E27D9E05D0 /* Aptabase */,
 				4DACF3D6AA785904CA06054B /* Sparkle */,
 			);
 			productName = NotiForward;
@@ -352,6 +370,7 @@
 			mainGroup = 1BBC6B5E08B6E2ACB61802AF;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				EC0E94F8A3388DB2D5748930 /* XCRemoteSwiftPackageReference "aptabase-swift" */,
 				2FACC1EEF49DF16D082BF04E /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -396,6 +415,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B796FFF53658723EACB20408 /* AnalyticsManager.swift in Sources */,
 				1E667E2D70D07E4DEE85642B /* AppCatalog.swift in Sources */,
 				CBA53583BDEC3641DB4469B7 /* AppIconLookup.swift in Sources */,
 				31E54709D9B4F5768F3A2C75 /* AppModel.swift in Sources */,
@@ -426,6 +446,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				072ED764A7A76099A194CE86 /* AnalyticsManager.swift in Sources */,
 				6458BDF770A16900C5A57F30 /* AppCatalog.swift in Sources */,
 				BCCD00C00D8A484C138FAEE7 /* AppIconLookup.swift in Sources */,
 				39DEC99468BCABDBF385C4D8 /* AppModel.swift in Sources */,
@@ -540,7 +561,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = U2NEAJ73J2;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -555,7 +576,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_LDFLAGS = "$(inherited) -lsqlite3";
@@ -680,7 +701,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = U2NEAJ73J2;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -701,7 +722,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -764,13 +785,31 @@
 				minimumVersion = 2.6.0;
 			};
 		};
+		EC0E94F8A3388DB2D5748930 /* XCRemoteSwiftPackageReference "aptabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/aptabase/aptabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.11;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		2A61FA31726D46E27D9E05D0 /* Aptabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC0E94F8A3388DB2D5748930 /* XCRemoteSwiftPackageReference "aptabase-swift" */;
+			productName = Aptabase;
+		};
 		4DACF3D6AA785904CA06054B /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2FACC1EEF49DF16D082BF04E /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		92AC13410D456B71F4A76F10 /* Aptabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC0E94F8A3388DB2D5748930 /* XCRemoteSwiftPackageReference "aptabase-swift" */;
+			productName = Aptabase;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

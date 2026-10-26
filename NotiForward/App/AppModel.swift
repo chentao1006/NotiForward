@@ -138,6 +138,7 @@ final class AppModel {
             if try await coordinator.flush() > 0 {
                 lastForwardedAt = Date()
                 deliveryError = nil
+                AnalyticsManager.shared.track("notification_forwarded")
             }
         } catch {
             deliveryError = error.localizedDescription
@@ -220,17 +221,22 @@ final class AppModel {
                 )
                 try await BarkClient().send(message, configuration: configuration)
                 testStatus = .succeeded
+                AnalyticsManager.shared.track("test_notification_sent")
             } catch {
                 testStatus = .failed(error.localizedDescription)
             }
         }
     }
 
-    func togglePaused() { isPaused.toggle() }
+    func togglePaused() {
+        isPaused.toggle()
+        AnalyticsManager.shared.track(isPaused ? "forwarding_paused" : "forwarding_resumed")
+    }
     func hideMenuBar() { isMenuBarVisible = false }
     func restoreMenuBar() { isMenuBarVisible = true }
 
     func requestNotificationAccess() {
+        AnalyticsManager.shared.track("notification_access_requested")
         NotificationFolderAccess.request()
     }
 

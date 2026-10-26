@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AnalyticsManager.shared.start()
         guard Self.launchedAsLoginItem else { return }
         // Backstop in case a window was created before the launch kind was known.
         DispatchQueue.main.async {

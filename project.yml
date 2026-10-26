@@ -9,12 +9,15 @@ settings:
   base:
     DEVELOPMENT_TEAM: U2NEAJ73J2
     SWIFT_VERSION: "6.0"
-    CURRENT_PROJECT_VERSION: 5
-    MARKETING_VERSION: 1.1.0
+    CURRENT_PROJECT_VERSION: 6
+    MARKETING_VERSION: 1.1.1
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
     OTHER_LDFLAGS: "$(inherited) -lsqlite3"
 packages:
+  Aptabase:
+    url: https://github.com/aptabase/aptabase-swift
+    from: 0.3.11
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.6.0
@@ -40,6 +43,7 @@ targets:
   NotiForward:
     templates: [NotiForwardApp]
     dependencies:
+      - package: Aptabase
       - package: Sparkle
     settings:
       base:
@@ -52,6 +56,8 @@ targets:
   # Mac App Store: no temporary-exception entitlements; `#if APP_STORE` drops code that needs them.
   NotiForwardAppStore:
     templates: [NotiForwardApp]
+    dependencies:
+      - package: Aptabase
     settings:
       base:
         INFOPLIST_FILE: NotiForward/InfoAppStore.plist
