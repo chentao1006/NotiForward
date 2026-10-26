@@ -5,6 +5,7 @@ enum BarkError: Error, LocalizedError {
     case invalidServerURL
     case invalidResponse
     case server(status: Int, message: String)
+    case multipleDevices(String)
 
     var errorDescription: String? {
         switch self {
@@ -12,6 +13,7 @@ enum BarkError: Error, LocalizedError {
         case .invalidServerURL: return L("Bark server URL is invalid")
         case .invalidResponse: return L("Bark server returned an invalid response")
         case .server(let status, let message): return "Bark \(status): \(message)"
+        case .multipleDevices(let message): return message
         }
     }
 }

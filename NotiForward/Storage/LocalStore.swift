@@ -70,8 +70,8 @@ actor LocalStore {
     func save(general: GeneralSettings) throws { try encodeSetting(key: "general", value: general) }
     func save(rules: RuleConfiguration) throws { try encodeSetting(key: "rules", value: rules) }
 
-    func enqueue(_ notification: CapturedNotification) throws {
-        let data = try JSONEncoder.notiForward.encode(notification)
+    func enqueue(_ notification: CapturedNotification, deviceIDs: [UUID]) throws {
+        let data = try JSONEncoder.notiForward.encode(PendingNotification(notification: notification, remainingDeviceIDs: deviceIDs))
         try statement("INSERT OR IGNORE INTO pending_notifications(id,payload,created_at) VALUES(?,?,?)") { statement in
             bind(notification.id.uuidString, at: 1, to: statement)
             bind(data, at: 2, to: statement)
@@ -79,9 +79,21 @@ actor LocalStore {
         }
     }
 
-    func pendingNotifications(limit: Int = 100) throws -> [CapturedNotification] {
+    func pendingNotifications(limit: Int = 100) throws -> [PendingNotification] {
         try blobs(sql: "SELECT payload FROM pending_notifications ORDER BY created_at LIMIT ?", limit: limit)
-            .compactMap { try? JSONDecoder.notiForward.decode(CapturedNotification.self, from: $0) }
+            .compactMap { data in
+                if let pending = try? JSONDecoder.notiForward.decode(PendingNotification.self, from: data) { return pending }
+                guard let legacy = try? JSONDecoder.notiForward.decode(CapturedNotification.self, from: data) else { return nil }
+                return PendingNotification(notification: legacy, remainingDeviceIDs: [])
+            }
+    }
+
+    func updatePending(_ pending: PendingNotification) throws {
+        let data = try JSONEncoder.notiForward.encode(pending)
+        try statement("UPDATE pending_notifications SET payload=? WHERE id=?") { statement in
+            bind(data, at: 1, to: statement)
+            bind(pending.notification.id.uuidString, at: 2, to: statement)
+        }
     }
 
     func removePending(id: UUID) throws {

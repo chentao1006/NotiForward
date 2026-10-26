@@ -1,6 +1,21 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Add Device": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Add Device" } },
+        "zh-Hans": { "stringUnit": { "state": "translated", "value": "添加设备" } },
+        "zh-Hant": { "stringUnit": { "state": "translated", "value": "新增裝置" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "デバイスを追加" } },
+        "ko": { "stringUnit": { "state": "translated", "value": "기기 추가" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Gerät hinzufügen" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Ajouter un appareil" } },
+        "es": { "stringUnit": { "state": "translated", "value": "Añadir dispositivo" } },
+        "it": { "stringUnit": { "state": "translated", "value": "Aggiungi dispositivo" } },
+        "pt-BR": { "stringUnit": { "state": "translated", "value": "Adicionar dispositivo" } }
+      }
+    },
     "%@ reads only the Notification Center folder, which you grant once. Forwarding starts within a few seconds.": {
       "extractionState": "manual",
       "localizations": {
@@ -2471,71 +2486,6 @@
         }
       }
     },
-    "Looks up icons on the App Store by bundle ID. Apps not on the App Store show Bark’s icon.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Looks up icons on the App Store by bundle ID. Apps not on the App Store show Bark’s icon."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "通过 Bundle ID 在 App Store 查找图标。不在 App Store 上架的应用显示 Bark 的图标。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "透過 Bundle ID 在 App Store 尋找圖像。未在 App Store 上架的 App 會顯示 Bark 的圖像。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bundle ID をもとに App Store でアイコンを探します。App Store にないアプリは Bark のアイコンになります。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "번들 ID로 App Store에서 아이콘을 찾습니다. App Store에 없는 앱은 Bark 아이콘이 표시됩니다."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sucht Symbole anhand der Bundle-ID im App Store. Apps, die nicht im App Store sind, zeigen das Bark-Symbol."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recherche les icônes sur l’App Store à partir de l’identifiant de bundle. Les apps absentes de l’App Store affichent l’icône de Bark."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Busca los iconos en la App Store por ID de paquete. Las apps que no están en la App Store muestran el icono de Bark."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cerca le icone su App Store tramite l’ID bundle. Le app non presenti su App Store mostrano l’icona di Bark."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Busca os ícones na App Store pelo ID do pacote. Apps fora da App Store mostram o ícone do Bark."
-          }
-        }
-      }
-    },
     "No apps selected.": {
       "extractionState": "manual",
       "localizations": {
@@ -4807,71 +4757,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Atualizações"
-          }
-        }
-      }
-    },
-    "Uses the Mac app’s URL scheme, such as tg:// for Telegram. Apps without the same scheme on iPhone just open Bark.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uses the Mac app’s URL scheme, such as tg:// for Telegram. Apps without the same scheme on iPhone just open Bark."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用 Mac 应用的 URL Scheme，例如 Telegram 的 tg://。iPhone 上没有相同 Scheme 的应用会只打开 Bark。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用 Mac App 的 URL Scheme，例如 Telegram 的 tg://。iPhone 上沒有相同 Scheme 的 App 只會打開 Bark。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac アプリの URL スキーム（Telegram なら tg://）を使います。iPhone に同じスキームがないアプリは Bark が開くだけです。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac 앱의 URL 스킴(예: Telegram의 tg://)을 사용합니다. iPhone에 같은 스킴이 없는 앱은 Bark만 열립니다."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verwendet das URL-Schema der Mac-App, etwa tg:// für Telegram. Bei Apps ohne gleiches Schema auf dem iPhone öffnet sich nur Bark."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utilise le schéma d’URL de l’app Mac, par exemple tg:// pour Telegram. Pour les apps sans le même schéma sur iPhone, seul Bark s’ouvre."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa el esquema de URL de la app de Mac, como tg:// para Telegram. Las apps sin el mismo esquema en el iPhone solo abren Bark."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa lo schema URL dell’app per Mac, ad esempio tg:// per Telegram. Per le app senza lo stesso schema su iPhone si apre solo Bark."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usa o esquema de URL do app do Mac, como tg:// para o Telegram. Apps sem o mesmo esquema no iPhone apenas abrem o Bark."
           }
         }
       }

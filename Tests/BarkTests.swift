@@ -36,8 +36,9 @@ import Testing
         let token = String(repeating: "ab", count: 32)
         let saved = #"{"bark":{"serverURL":"https://api.day.app","deviceKey":"\#(token)"}}"#
         let settings = try JSONDecoder.notiForward.decode(GeneralSettings.self, from: Data(saved.utf8))
-        #expect(settings.bark.deviceToken == token)
-        #expect(settings.bark.needsRegistration)
+        #expect(settings.barkDevices.count == 1)
+        #expect(settings.barkDevices[0].deviceToken == token)
+        #expect(settings.barkDevices[0].needsRegistration)
     }
 
     @Test func emptyKeyIsNotConfigured() {
@@ -51,7 +52,21 @@ import Testing
         let settings = try JSONDecoder.notiForward.decode(GeneralSettings.self, from: Data(legacy.utf8))
         #expect(settings.launchAtLogin)
         #expect(settings.language == .chineseSimplified)
-        #expect(settings.bark == BarkConfiguration())
+        #expect(settings.barkDevices.isEmpty)
+    }
+
+    @Test func migratesLegacyConfiguredDeviceAndRoundTripsMultipleDevices() throws {
+        let legacy = #"{"bark":{"serverURL":"https://api.day.app","deviceKey":"first"}}"#
+        var settings = try JSONDecoder.notiForward.decode(GeneralSettings.self, from: Data(legacy.utf8))
+        #expect(settings.barkDevices.map(\.trimmedKey) == ["first"])
+        var second = BarkConfiguration()
+        second.name = "iPad"
+        second.apply(input: "second")
+        settings.barkDevices.append(second)
+        let decoded = try JSONDecoder.notiForward.decode(GeneralSettings.self, from: JSONEncoder.notiForward.encode(settings))
+        #expect(decoded.barkDevices.map(\.trimmedKey) == ["first", "second"])
+        #expect(decoded.barkDevices[1].name == "iPad")
+        #expect(decoded.isBarkConfigured)
     }
 }
 

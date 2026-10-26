@@ -34,13 +34,14 @@ final class AppModel {
     private var store: LocalStore?
     private var coordinator: ForwardCoordinator?
     private var monitorTask: Task<Void, Never>?
-    private var registrationTask: Task<Void, Never>?
+    private var registrationTasks: [UUID: Task<Void, Never>] = [:]
+    var registeringDeviceIDs: Set<UUID> = []
     private var hasStarted = false
 
     /// Mirrors whether a Bark key is saved, readable synchronously when scenes are built at launch.
     static var isBarkConfigured: Bool { UserDefaults.standard.bool(forKey: "barkConfigured") }
 
-    var isForwarding: Bool { captureStatus == .running && !isPaused && general.bark.isConfigured }
+    var isForwarding: Bool { captureStatus == .running && !isPaused && general.isBarkConfigured }
 
     func start() async {
         guard !hasStarted else { return }
@@ -51,9 +52,12 @@ final class AppModel {
             let loaded = try await store.loadSettings()
             general = loaded.0
             rules = loaded.1
+            normalizeSharedBarkSettings()
+            // Persist generated device IDs immediately when upgrading a legacy single-key configuration.
+            try await store.save(general: general)
             language.apply(general.language)
-            UserDefaults.standard.set(general.bark.isConfigured, forKey: "barkConfigured")
-            registerIfNeeded()
+            UserDefaults.standard.set(general.isBarkConfigured, forKey: "barkConfigured")
+            registerAllIfNeeded()
             let coordinator = ForwardCoordinator(store: store, settings: general, rules: rules)
             self.coordinator = coordinator
             monitorTask?.cancel()
@@ -140,7 +144,7 @@ final class AppModel {
     func saveSettings() {
         language.apply(general.language)
         setLaunchAtLogin(general.launchAtLogin)
-        UserDefaults.standard.set(general.bark.isConfigured, forKey: "barkConfigured")
+        UserDefaults.standard.set(general.isBarkConfigured, forKey: "barkConfigured")
         guard let store else { return }
         rules.updatedAt = Date()
         let general = general, rules = rules
@@ -152,64 +156,152 @@ final class AppModel {
     }
 
     /// Accepts a device token, a bare key or a full Bark URL pasted from the iPhone app.
-    func setBarkInput(_ input: String) {
-        general.bark.apply(input: input)
+    func addBarkDevice() {
+        var device = sharedBarkConfiguration
+        device.id = UUID()
+        device.name = ""
+        device.deviceKey = ""
+        device.deviceToken = ""
+        general.barkDevices.append(device)
+        saveSettings()
+    }
+
+    func removeBarkDevice(id: UUID) {
+        guard general.barkDevices.contains(where: { $0.id == id }) else { return }
+        registrationTasks[id]?.cancel()
+        registrationTasks[id] = nil
+        registeringDeviceIDs.remove(id)
+        general.barkDevices.removeAll { $0.id == id }
         deliveryError = nil
         testStatus = .idle
         saveSettings()
-        registerIfNeeded()
     }
 
-    /// Keys are issued per server, so a key registered from a device token is dropped when the server changes.
-    func barkServerChanged() {
-        if !general.bark.deviceToken.isEmpty { general.bark.deviceKey = "" }
+    func setBarkInput(_ input: String, deviceID: UUID) {
+        guard let index = general.barkDevices.firstIndex(where: { $0.id == deviceID }) else { return }
+        let previousServer = general.barkDevices[index].serverURL
+        general.barkDevices[index].apply(input: input)
+        if general.barkDevices[index].serverURL != previousServer {
+            setBarkServer(general.barkDevices[index].serverURL)
+        }
+        deliveryError = nil
+        testStatus = .idle
         saveSettings()
-        registerIfNeeded()
+        registerIfNeeded(deviceID: deviceID)
+    }
+
+    var sharedBarkConfiguration: BarkConfiguration {
+        general.barkDevices.first ?? BarkConfiguration()
+    }
+
+    private func normalizeSharedBarkSettings() {
+        guard let shared = general.barkDevices.first else { return }
+        for index in general.barkDevices.indices.dropFirst() {
+            general.barkDevices[index].serverURL = shared.serverURL
+            general.barkDevices[index].level = shared.level
+            general.barkDevices[index].groupByApp = shared.groupByApp
+            general.barkDevices[index].opensAppOnTap = shared.opensAppOnTap
+            general.barkDevices[index].showsAppIcon = shared.showsAppIcon
+        }
+    }
+
+    /// Keys are issued per server, so registered keys are refreshed when the shared server changes.
+    func setBarkServer(_ serverURL: String) {
+        for index in general.barkDevices.indices {
+            general.barkDevices[index].serverURL = serverURL
+            if !general.barkDevices[index].deviceToken.isEmpty { general.barkDevices[index].deviceKey = "" }
+        }
+        saveSettings()
+        registerAllIfNeeded()
     }
 
     func resetBarkServer() {
-        general.bark.serverURL = BarkConfiguration.defaultServer
-        barkServerChanged()
+        setBarkServer(BarkConfiguration.defaultServer)
     }
 
-    var isRegistering: Bool { registrationTask != nil }
+    func setBarkLevel(_ level: BarkLevel) {
+        for index in general.barkDevices.indices { general.barkDevices[index].level = level }
+        saveSettings()
+    }
 
-    private func registerIfNeeded() {
-        registrationTask?.cancel()
-        registrationTask = nil
-        guard general.bark.needsRegistration else { return }
-        let configuration = general.bark
-        registrationTask = Task {
+    func setBarkGroupByApp(_ enabled: Bool) {
+        for index in general.barkDevices.indices { general.barkDevices[index].groupByApp = enabled }
+        saveSettings()
+    }
+
+    func setBarkShowsAppIcon(_ enabled: Bool) {
+        for index in general.barkDevices.indices { general.barkDevices[index].showsAppIcon = enabled }
+        saveSettings()
+    }
+
+    func setBarkOpensAppOnTap(_ enabled: Bool) {
+        for index in general.barkDevices.indices { general.barkDevices[index].opensAppOnTap = enabled }
+        saveSettings()
+    }
+
+    func isRegistering(deviceID: UUID) -> Bool { registeringDeviceIDs.contains(deviceID) }
+
+    private func registerAllIfNeeded() {
+        for device in general.barkDevices { registerIfNeeded(deviceID: device.id) }
+    }
+
+    private func registerIfNeeded(deviceID: UUID) {
+        registrationTasks[deviceID]?.cancel()
+        registrationTasks[deviceID] = nil
+        registeringDeviceIDs.remove(deviceID)
+        guard let configuration = general.barkDevices.first(where: { $0.id == deviceID }), configuration.needsRegistration else { return }
+        registeringDeviceIDs.insert(deviceID)
+        registrationTasks[deviceID] = Task {
+            defer {
+                registeringDeviceIDs.remove(deviceID)
+                registrationTasks[deviceID] = nil
+            }
             do {
                 let key = try await BarkClient().register(configuration: configuration)
-                guard !Task.isCancelled, general.bark.deviceToken == configuration.deviceToken,
-                      general.bark.serverURL == configuration.serverURL else { return }
-                general.bark.deviceKey = key
+                guard !Task.isCancelled,
+                      let index = general.barkDevices.firstIndex(where: { $0.id == deviceID }),
+                      general.barkDevices[index].deviceToken == configuration.deviceToken,
+                      general.barkDevices[index].serverURL == configuration.serverURL else { return }
+                general.barkDevices[index].deviceKey = key
                 deliveryError = nil
                 saveSettings()
             } catch {
                 guard !Task.isCancelled else { return }
                 deliveryError = error.localizedDescription
             }
-            registrationTask = nil
         }
     }
 
     func sendTest() {
-        let configuration = general.bark
+        let configurations = general.configuredBarkDevices
+        guard !configurations.isEmpty else { return }
         testStatus = .sending
         Task {
-            do {
-                let message = BarkMessage(
-                    title: appName,
-                    body: L("Test notification from \(Host.current().localizedName ?? "Mac")"),
-                    group: configuration.groupByApp ? appName : nil
-                )
-                try await BarkClient().send(message, configuration: configuration)
+            let failures = await withTaskGroup(of: String?.self, returning: [String].self) { group in
+                for configuration in configurations {
+                    group.addTask {
+                        do {
+                            let message = BarkMessage(
+                                title: appName,
+                                body: L("Test notification from \(Host.current().localizedName ?? "Mac")"),
+                                group: configuration.groupByApp ? appName : nil
+                            )
+                            try await BarkClient().send(message, configuration: configuration)
+                            return nil
+                        } catch {
+                            return error.localizedDescription
+                        }
+                    }
+                }
+                var errors: [String] = []
+                for await error in group { if let error { errors.append(error) } }
+                return errors
+            }
+            if failures.isEmpty {
                 testStatus = .succeeded
                 AnalyticsManager.shared.track("test_notification_sent")
-            } catch {
-                testStatus = .failed(error.localizedDescription)
+            } else {
+                testStatus = .failed(failures.joined(separator: "; "))
             }
         }
     }

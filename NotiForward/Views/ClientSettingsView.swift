@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ClientSettingsView: View {
     @Bindable var model: AppModel
+    @State private var selectedDeviceID: UUID?
 
     var body: some View {
         Form {
@@ -19,29 +20,68 @@ struct ClientSettingsView: View {
                 }
                 .padding(.vertical, 4)
             }
+
             Section {
-                TextField(L("Device token or key"), text: Binding(
-                    get: { model.general.bark.input },
-                    set: { model.setBarkInput($0) }
-                ), prompt: Text(L("Paste the device token, key or URL from the Bark app")))
-                .labelsHidden()
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
-                if !model.general.bark.deviceToken.isEmpty {
-                    if model.isRegistering {
-                        Text(L("Registering device token…")).font(.caption).foregroundStyle(.secondary)
-                    } else if model.general.bark.isConfigured {
-                        Text(L("Registered as key \(model.general.bark.deviceKey)"))
-                            .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                VStack(spacing: 0) {
+                    List(model.general.barkDevices, selection: $selectedDeviceID) { device in
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                TextField(L("Device token or key"), text: Binding(
+                                    get: { deviceValue(device.id)?.input ?? "" },
+                                    set: { model.setBarkInput($0, deviceID: device.id) }
+                                ), prompt: Text(L("Paste the device token, key or URL from the Bark app")))
+                                .labelsHidden()
+                                .textFieldStyle(.plain)
+                                .font(.system(.body, design: .monospaced))
+
+                                if let current = deviceValue(device.id), !current.deviceToken.isEmpty {
+                                    if model.isRegistering(deviceID: device.id) {
+                                        Text(L("Registering device token…"))
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    } else if current.isConfigured {
+                                        Text(L("Registered as key \(current.deviceKey)"))
+                                            .font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                                    }
+                                }
+                            }
+                        }
+                        .tag(device.id)
                     }
+                    .listStyle(.plain)
+                    .frame(height: min(180, max(72, CGFloat(model.general.barkDevices.count) * 52)))
+
+                    Divider()
+
+                    HStack(spacing: 0) {
+                        Button {
+                            model.addBarkDevice()
+                            selectedDeviceID = model.general.barkDevices.last?.id
+                        } label: {
+                            Image(systemName: "plus").frame(width: 28, height: 26)
+                        }
+                        .help(L("Add Device"))
+
+                        Divider().frame(height: 20)
+
+                        Button {
+                            guard let selectedDeviceID, hasValidDeviceSelection else { return }
+                            model.removeBarkDevice(id: selectedDeviceID)
+                            self.selectedDeviceID = model.general.barkDevices.first?.id
+                        } label: {
+                            Image(systemName: "minus").frame(width: 28, height: 26)
+                        }
+                        .disabled(!hasValidDeviceSelection)
+                        .help(L("Remove"))
+
+                        Spacer()
+                    }
+                    .buttonStyle(.plain)
                 }
-                HStack {
-                    Button(L("Send Test Notification")) { model.sendTest() }
-                        .disabled(!model.general.bark.isConfigured || model.testStatus == .sending)
-                    testStatusView
-                }
-                if let error = model.deliveryError {
-                    LabeledContent(L("Delivery error")) { Text(error).foregroundStyle(.red) }
+                .background(.background)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(.quaternary)
                 }
             } header: {
                 Text(L("Device token or key"))
@@ -49,40 +89,72 @@ struct ClientSettingsView: View {
                 Text(L("Paste the device token from Bark, or the key from its server list. A full URL such as https://api.day.app/yourkey/ also works."))
                     .font(.caption).foregroundStyle(.secondary)
             }
+
+            Section {
+                HStack {
+                    Button(L("Send Test Notification")) { model.sendTest() }
+                        .disabled(!model.general.isBarkConfigured || model.testStatus == .sending)
+                    testStatusView
+                }
+                if let error = model.deliveryError {
+                    LabeledContent(L("Delivery error")) { Text(error).foregroundStyle(.red) }
+                }
+            }
+
             Section(L("Advanced")) {
                 LabeledContent(L("Server")) {
                     HStack {
-                        TextField(L("Server"), text: $model.general.bark.serverURL, prompt: Text(BarkConfiguration.defaultServer))
-                            .labelsHidden()
-                            .onChange(of: model.general.bark.serverURL) { _, _ in model.barkServerChanged() }
-                        if model.general.bark.serverURL != BarkConfiguration.defaultServer {
+                        TextField(L("Server"), text: Binding(
+                            get: { model.sharedBarkConfiguration.serverURL },
+                            set: { model.setBarkServer($0) }
+                        ), prompt: Text(BarkConfiguration.defaultServer))
+                        .labelsHidden()
+                        if model.sharedBarkConfiguration.serverURL != BarkConfiguration.defaultServer {
                             Button(L("Reset")) { model.resetBarkServer() }
                         }
                     }
                 }
-                Picker(L("Interruption level"), selection: $model.general.bark.level) {
+                Picker(L("Interruption level"), selection: Binding(
+                    get: { model.sharedBarkConfiguration.level },
+                    set: { model.setBarkLevel($0) }
+                )) {
                     Text(L("Active")).tag(BarkLevel.active)
                     Text(L("Time Sensitive")).tag(BarkLevel.timeSensitive)
                     Text(L("Passive")).tag(BarkLevel.passive)
                 }
-                .onChange(of: model.general.bark.level) { _, _ in model.saveSettings() }
-                Toggle(L("Group notifications by app"), isOn: $model.general.bark.groupByApp)
-                    .onChange(of: model.general.bark.groupByApp) { _, _ in model.saveSettings() }
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(L("Show app icons"), isOn: $model.general.bark.showsAppIcon)
-                        .onChange(of: model.general.bark.showsAppIcon) { _, _ in model.saveSettings() }
-                    Text(L("Looks up icons on the App Store by bundle ID. Apps not on the App Store show Bark’s icon."))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Toggle(L("Open the matching iPhone app on tap"), isOn: $model.general.bark.opensAppOnTap)
-                        .onChange(of: model.general.bark.opensAppOnTap) { _, _ in model.saveSettings() }
-                    Text(L("Uses the Mac app’s URL scheme, such as tg:// for Telegram. Apps without the same scheme on iPhone just open Bark."))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
+                Toggle(L("Group notifications by app"), isOn: Binding(
+                    get: { model.sharedBarkConfiguration.groupByApp },
+                    set: { model.setBarkGroupByApp($0) }
+                ))
+                Toggle(L("Show app icons"), isOn: Binding(
+                    get: { model.sharedBarkConfiguration.showsAppIcon },
+                    set: { model.setBarkShowsAppIcon($0) }
+                ))
+                Toggle(L("Open the matching iPhone app on tap"), isOn: Binding(
+                    get: { model.sharedBarkConfiguration.opensAppOnTap },
+                    set: { model.setBarkOpensAppOnTap($0) }
+                ))
             }
+            .disabled(model.general.barkDevices.isEmpty)
         }
         .formStyle(.grouped)
+        .onAppear {
+            if selectedDeviceID == nil { selectedDeviceID = model.general.barkDevices.first?.id }
+        }
+        .onChange(of: model.general.barkDevices.map(\.id)) { _, deviceIDs in
+            if selectedDeviceID.map(deviceIDs.contains) != true {
+                selectedDeviceID = deviceIDs.first
+            }
+        }
+    }
+
+    private func deviceValue(_ id: UUID) -> BarkConfiguration? {
+        model.general.barkDevices.first { $0.id == id }
+    }
+
+    private var hasValidDeviceSelection: Bool {
+        guard let selectedDeviceID else { return false }
+        return model.general.barkDevices.contains { $0.id == selectedDeviceID }
     }
 
     @ViewBuilder private var testStatusView: some View {

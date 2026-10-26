@@ -2,7 +2,7 @@
 
 [中文](README_zh.md) · [Website](https://notiforward.ct106.com) · [Privacy](https://notiforward.ct106.com/privacy.html)
 
-NotiForward (知会) is a macOS menu bar app that forwards the Mac notifications you choose to your iPhone through [Bark](https://bark.day.app). There is no companion iOS app and no server of our own: install Bark on the iPhone, paste its device token into NotiForward, and pick the apps to forward.
+NotiForward (知会) is a macOS menu bar app that forwards the Mac notifications you choose to one or more devices through [Bark](https://bark.day.app). There is no companion iOS app and no server of our own: install Bark on each receiving device, add its token or key to NotiForward, and pick the apps to forward.
 
 ## Install
 
@@ -16,26 +16,27 @@ Requires macOS 15 or later.
 
 ## Setup
 
-1. Install Bark on the iPhone.
+1. Install Bark on each iPhone or iPad that should receive notifications.
 2. Launch NotiForward. Settings opens on the **Client** tab until Bark is set up.
-3. Paste one of these into the first field:
+3. In the key list, paste one of these:
    - the **device token** from Bark. NotiForward registers it with the server and keeps the key it gets back.
    - the **key** from Bark's server list.
    - a full URL such as `https://api.day.app/yourkey/`. The server and key are split out automatically.
-4. Under **General → Status**, click **Grant Access…** and confirm. The panel opens on the Notification Center folder; this is the only folder the app reads. Forwarding starts within a few seconds.
-5. Pick the apps to forward under **Forwarding Rules**, then use **Send Test Notification** to confirm delivery.
+4. Use the plus button below the list to add more keys. All devices share the server, interruption level, grouping, icon, and tap-action settings.
+5. Under **General → Status**, click **Grant Access…** and confirm. The panel opens on the Notification Center folder; this is the only folder the app reads. Forwarding starts within a few seconds.
+6. Pick the apps to forward under **Forwarding Rules**, then use **Send Test Notification** to confirm delivery to every device.
 
-A self-hosted [bark-server](https://github.com/Finb/bark-server) can be set under **Client → Advanced → Server**.
+A self-hosted [bark-server](https://github.com/Finb/bark-server) can be set once for all devices under **Client → Advanced → Server**.
 
 ## How it works
 
 1. **Capture.** The app watches the Notification Center database (`~/Library/Group Containers/group.com.apple.usernoted`) with kernel file events and reads new rows only when it changes, so it sleeps between notifications. A 60-second safety check covers missed events. Access comes from a security-scoped bookmark of that one folder, granted in a system open panel; no Full Disk Access is needed.
 2. **Rules.** App and keyword rules run locally. Notifications that don't match never leave the Mac.
-3. **Delivery.** Accepted notifications are queued in SQLite and sent to `POST {server}/push`. Each push carries:
+3. **Delivery.** Accepted notifications are queued in SQLite and sent concurrently to every configured Bark device. Each push carries:
    - title `App · Title`, grouped by app;
    - the app's icon, looked up on the App Store by bundle ID;
    - a tap URL built from the Mac app's URL scheme (for example `tg://` for Telegram), so tapping opens the same app on iPhone.
-4. **Retries.** Failed sends stay queued and retry with exponential backoff, up to one minute apart. Notifications older than six hours are dropped rather than delivered late. Notifications that arrive while forwarding is paused are skipped.
+4. **Retries.** If delivery fails on one device, only that device remains queued and retries with exponential backoff, so devices that already succeeded do not receive duplicates. Retries are up to one minute apart. Notifications older than six hours are dropped rather than delivered late, and notifications that arrive while forwarding is paused are skipped.
 
 Notification Center itself commits a new notification to its database a few seconds after showing it, so pushes arrive about 3–5 seconds after the Mac shows the notification.
 
@@ -102,14 +103,14 @@ Before the first submission, in App Store Connect:
 
 Suggested review notes:
 
-> NotiForward forwards notifications the user chooses from their Mac to their own iPhone through Bark, a free open-source push app. To read notifications, the user selects the Notification Center data folder (~/Library/Group Containers/group.com.apple.usernoted) once in a standard open panel; the app keeps a read-only security-scoped bookmark to that folder and accesses nothing else. Filtering rules run on the Mac, and only matching notifications are sent, over HTTPS, to the Bark server the user configures. To test: install Bark on an iPhone, paste its device key in Settings → Client, grant folder access in Settings → General, choose an app in Forwarding Rules, and click Send Test Notification.
+> NotiForward forwards notifications the user chooses from their Mac to one or more of their own devices through Bark, a free open-source push app. To read notifications, the user selects the Notification Center data folder (~/Library/Group Containers/group.com.apple.usernoted) once in a standard open panel; the app keeps a read-only security-scoped bookmark to that folder and accesses nothing else. Filtering rules run on the Mac, and only matching notifications are sent, over HTTPS, to the Bark servers the user configures. To test: install Bark on an iPhone, add its device key in Settings → Client, grant folder access in Settings → General, choose an app in Forwarding Rules, and click Send Test Notification.
 
 ## Privacy
 
 - There is no account, advertising, or cross-app tracking. Aptabase receives anonymous product-interaction events and standard technical context, but never notification content, Bark credentials, app bundle identifiers, or rule keywords.
 - Rules run on the Mac; only notifications that pass them are sent.
-- Forwarded text goes to the configured Bark server and through Apple's push service to the iPhone. Use a self-hosted server if you don't want it to pass through `api.day.app`.
+- Forwarded text goes to each device's configured Bark server and through Apple's push service. Use a self-hosted server if you don't want it to pass through `api.day.app`.
 - App icons are looked up by bundle ID on Apple's App Store lookup service; no notification content is sent there.
-- Settings, the Bark key and the outgoing queue live in the app's sandbox container.
+- Settings, every device's Bark key, and the outgoing queue live in the app's sandbox container.
 
 See the full [privacy policy](https://notiforward.ct106.com/privacy.html).

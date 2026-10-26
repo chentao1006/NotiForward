@@ -19,7 +19,7 @@ actor ForwardCoordinator {
     }
 
     func update(settings: GeneralSettings, rules: RuleConfiguration) {
-        if settings.bark != self.settings.bark { resetBackoff() }
+        if settings.barkDevices != self.settings.barkDevices { resetBackoff() }
         self.settings = settings
         self.rules = rules
     }
@@ -28,7 +28,8 @@ actor ForwardCoordinator {
     /// and old notifications found after a long gap (e.g. the app was not running) are skipped.
     func receive(_ notification: CapturedNotification) async throws -> Bool {
         let source = "#\(notification.databaseID) \(notification.sourceBundleID)"
-        guard settings.bark.isConfigured else {
+        let deviceIDs = settings.configuredBarkDevices.map(\.id)
+        guard !deviceIDs.isEmpty else {
             Log.forward.info("Skipped \(source, privacy: .public): Bark is not configured")
             return false
         }
@@ -41,7 +42,7 @@ actor ForwardCoordinator {
             Log.forward.info("Skipped \(source, privacy: .public): \(String(describing: decision), privacy: .public)")
             return false
         }
-        try await store.enqueue(notification)
+        try await store.enqueue(notification, deviceIDs: deviceIDs)
         Log.forward.info("Queued \(source, privacy: .public): \(notification.title, privacy: .private)")
         return true
     }
@@ -50,24 +51,47 @@ actor ForwardCoordinator {
     /// After a failure, delivery backs off exponentially up to one minute.
     func flush() async throws -> Int {
         try await store.purgePending(olderThan: Date().addingTimeInterval(-Self.maximumPendingAge))
-        guard settings.bark.isConfigured else { return 0 }
+        let configuredDevices = settings.configuredBarkDevices
+        guard !configuredDevices.isEmpty else { return 0 }
         if let retryAfter, retryAfter > Date() { return 0 }
         var sent = 0
-        for notification in try await store.pendingNotifications() {
-            do {
-                var message = BarkMessage(notification, configuration: settings.bark)
-                if settings.bark.showsAppIcon {
-                    message.icon = await icons.iconURL(for: notification.sourceBundleID)
+        for var pending in try await store.pendingNotifications() {
+            let notification = pending.notification
+            let targetIDs = pending.remainingDeviceIDs.isEmpty ? Set(configuredDevices.map(\.id)) : Set(pending.remainingDeviceIDs)
+            let targets = configuredDevices.filter { targetIDs.contains($0.id) }
+            if targets.isEmpty {
+                try await store.removePending(id: notification.id)
+                continue
+            }
+            let icon = targets.contains(where: \.showsAppIcon) ? await icons.iconURL(for: notification.sourceBundleID) : nil
+            let failures = await withTaskGroup(of: (UUID, String?).self, returning: [(UUID, String?)].self) { group in
+                for configuration in targets {
+                    group.addTask { [bark] in
+                        do {
+                            var message = BarkMessage(notification, configuration: configuration)
+                            if configuration.showsAppIcon { message.icon = icon }
+                            try await bark.send(message, configuration: configuration)
+                            return (configuration.id, nil)
+                        } catch {
+                            return (configuration.id, error.localizedDescription)
+                        }
+                    }
                 }
-                try await bark.send(message, configuration: settings.bark)
-            } catch {
+                var results: [(UUID, String?)] = []
+                for await result in group { results.append(result) }
+                return results.filter { $0.1 != nil }
+            }
+            if !failures.isEmpty {
+                pending.remainingDeviceIDs = failures.map(\.0)
+                try await store.updatePending(pending)
                 consecutiveFailures += 1
                 let delay = min(60, pow(2, Double(consecutiveFailures)))
                 retryAfter = Date().addingTimeInterval(delay)
-                Log.forward.error("Send failed for #\(notification.databaseID), retrying in \(Int(delay))s: \(error.localizedDescription, privacy: .public)")
-                throw error
+                let message = failures.compactMap(\.1).joined(separator: "; ")
+                Log.forward.error("Send failed for #\(notification.databaseID) on \(failures.count) device(s), retrying in \(Int(delay))s: \(message, privacy: .public)")
+                throw BarkError.multipleDevices(message)
             }
-            Log.forward.info("Sent #\(notification.databaseID) \(notification.sourceBundleID, privacy: .public) to Bark")
+            Log.forward.info("Sent #\(notification.databaseID) \(notification.sourceBundleID, privacy: .public) to \(targets.count) Bark device(s)")
             try await store.removePending(id: notification.id)
             resetBackoff()
             sent += 1

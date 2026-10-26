@@ -4,6 +4,7 @@ import SwiftUI
 struct RulesSettingsView: View {
     @Bindable var model: AppModel
     @State private var isChoosingApps = false
+    @State private var selectedAppID: String?
 
     /// Selected apps, including ones not found in the scanned folders.
     private var selectedApps: [CatalogApp] {
@@ -20,29 +21,53 @@ struct RulesSettingsView: View {
                     Text(L("Forward all except selected apps")).tag(AppFilterMode.allExceptBlocked)
                 }
                 .onChange(of: model.rules.appMode) { _, _ in model.saveSettings() }
-                if selectedApps.isEmpty {
-                    Text(L("No apps selected."))
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(selectedApps) { app in
+                VStack(spacing: 0) {
+                    List(selectedApps, selection: $selectedAppID) { app in
                         HStack(spacing: 10) {
                             AppIconView(app: app, size: 22)
                             Text(app.name)
-                            Spacer()
-                            Button {
-                                model.rules.appBundleIDs.remove(app.bundleID)
-                                model.saveSettings()
-                            } label: {
-                                Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.borderless)
-                            .help(L("Remove"))
+                        }
+                        .tag(app.bundleID)
+                    }
+                    .listStyle(.plain)
+                    .overlay {
+                        if selectedApps.isEmpty {
+                            Text(L("No apps selected."))
+                                .foregroundStyle(.secondary)
                         }
                     }
+                    .frame(height: min(220, max(86, CGFloat(selectedApps.count) * 34)))
+
+                    Divider()
+
+                    HStack(spacing: 0) {
+                        Button { isChoosingApps = true } label: {
+                            Image(systemName: "plus").frame(width: 28, height: 26)
+                        }
+                        .help(L("Choose Apps…"))
+
+                        Divider().frame(height: 20)
+
+                        Button {
+                            guard let selectedAppID, hasValidAppSelection else { return }
+                            model.rules.appBundleIDs.remove(selectedAppID)
+                            model.saveSettings()
+                            self.selectedAppID = selectedApps.first?.bundleID
+                        } label: {
+                            Image(systemName: "minus").frame(width: 28, height: 26)
+                        }
+                        .disabled(!hasValidAppSelection)
+                        .help(L("Remove"))
+
+                        Spacer()
+                    }
+                    .buttonStyle(.plain)
                 }
-                HStack {
-                    Spacer()
-                    Button(L("Choose Apps…")) { isChoosingApps = true }
+                .background(.background)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(.quaternary)
                 }
             } header: {
                 Text(L("Apps"))
@@ -81,6 +106,16 @@ struct RulesSettingsView: View {
         }
         .formStyle(.grouped)
         .sheet(isPresented: $isChoosingApps) { AppPickerView(model: model) }
+        .onChange(of: selectedApps.map(\.bundleID)) { _, appIDs in
+            if selectedAppID.map(appIDs.contains) != true {
+                selectedAppID = appIDs.first
+            }
+        }
+    }
+
+    private var hasValidAppSelection: Bool {
+        guard let selectedAppID else { return false }
+        return selectedApps.contains { $0.bundleID == selectedAppID }
     }
 }
 

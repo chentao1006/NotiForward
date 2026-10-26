@@ -19,9 +19,9 @@ struct MenuContentView: View {
             Button(model.isPaused ? L("Resume Forwarding") : L("Pause Forwarding")) {
                 model.togglePaused()
             }
-            .disabled(!model.general.bark.isConfigured)
+            .disabled(!model.general.isBarkConfigured)
             Button(L("Send Test Notification")) { model.sendTest() }
-                .disabled(!model.general.bark.isConfigured)
+                .disabled(!model.general.isBarkConfigured)
 #if !APP_STORE
             Button(L("Check for Updates…")) { model.updater.checkForUpdates() }
 #endif
@@ -43,7 +43,7 @@ struct MenuContentView: View {
         case .permissionRequired: return L("Notification folder access is required")
         case .failed(let message): return message
         case .running:
-            if !model.general.bark.isConfigured { return L("Bark device key is not set") }
+            if !model.general.isBarkConfigured { return L("Bark device key is not set") }
             if model.isPaused { return L("Forwarding is paused") }
             return L("Forwarding to Bark")
         }
@@ -54,7 +54,7 @@ struct MenuContentView: View {
         case .starting: return "clock"
         case .permissionRequired, .failed: return "exclamationmark.triangle.fill"
         case .running:
-            if !model.general.bark.isConfigured { return "exclamationmark.triangle.fill" }
+            if !model.general.isBarkConfigured { return "exclamationmark.triangle.fill" }
             return model.isPaused ? "pause.circle.fill" : "checkmark.circle.fill"
         }
     }

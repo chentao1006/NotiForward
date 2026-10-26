@@ -44,9 +44,11 @@ enum BarkLevel: String, Codable, CaseIterable, Sendable {
     case passive
 }
 
-struct BarkConfiguration: Codable, Equatable, Sendable {
+struct BarkConfiguration: Codable, Equatable, Identifiable, Sendable {
     static let defaultServer = "https://api.day.app"
 
+    var id = UUID()
+    var name = ""
     var serverURL = BarkConfiguration.defaultServer
     /// The key used for pushing; obtained from `/register` when the user entered a device token.
     var deviceKey = ""
@@ -97,6 +99,8 @@ struct BarkConfiguration: Codable, Equatable, Sendable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
         serverURL = try container.decodeIfPresent(String.self, forKey: .serverURL) ?? Self.defaultServer
         deviceKey = try container.decodeIfPresent(String.self, forKey: .deviceKey) ?? ""
         deviceToken = try container.decodeIfPresent(String.self, forKey: .deviceToken) ?? ""
@@ -114,18 +118,43 @@ struct BarkConfiguration: Codable, Equatable, Sendable {
 
 struct GeneralSettings: Codable, Equatable, Sendable {
     var launchAtLogin = false
-    var bark = BarkConfiguration()
+    var barkDevices: [BarkConfiguration] = []
     var language: AppLanguage = .system
 
+    var isBarkConfigured: Bool { barkDevices.contains(where: \.isConfigured) }
+    var configuredBarkDevices: [BarkConfiguration] { barkDevices.filter(\.isConfigured) }
+
+    private enum CodingKeys: String, CodingKey {
+        case launchAtLogin, barkDevices, bark, language
+    }
+
     init() {}
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(launchAtLogin, forKey: .launchAtLogin)
+        try container.encode(barkDevices, forKey: .barkDevices)
+        try container.encode(language, forKey: .language)
+    }
 
     // Decoded field by field so settings saved by older builds keep loading.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
-        bark = try container.decodeIfPresent(BarkConfiguration.self, forKey: .bark) ?? BarkConfiguration()
+        if let devices = try container.decodeIfPresent([BarkConfiguration].self, forKey: .barkDevices) {
+            barkDevices = devices
+        } else if let legacy = try container.decodeIfPresent(BarkConfiguration.self, forKey: .bark), legacy.isConfigured || legacy.needsRegistration {
+            barkDevices = [legacy]
+        } else {
+            barkDevices = []
+        }
         language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? .system
     }
+}
+
+struct PendingNotification: Codable, Sendable {
+    var notification: CapturedNotification
+    var remainingDeviceIDs: [UUID]
 }
 
 struct CapturedNotification: Codable, Identifiable, Hashable, Sendable {
