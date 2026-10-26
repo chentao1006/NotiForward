@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ClientSettingsView: View {
-    @Bindable var model: AppModel
+    @ObservedObject var model: AppModel
     @State private var selectedDeviceID: UUID?
 
     var body: some View {
@@ -97,12 +97,14 @@ struct ClientSettingsView: View {
                     testStatusView
                 }
                 if let error = model.deliveryError {
-                    LabeledContent(L("Delivery error")) { Text(error).foregroundStyle(.red) }
+                    HStack { Text(L("Delivery error")); Spacer(); Text(error).foregroundStyle(.red) }
                 }
             }
 
             Section(L("Advanced")) {
-                LabeledContent(L("Server")) {
+                HStack {
+                    Text(L("Server"))
+                    Spacer()
                     HStack {
                         TextField(L("Server"), text: Binding(
                             get: { model.sharedBarkConfiguration.serverURL },
@@ -137,11 +139,10 @@ struct ClientSettingsView: View {
             }
             .disabled(model.general.barkDevices.isEmpty)
         }
-        .formStyle(.grouped)
         .onAppear {
             if selectedDeviceID == nil { selectedDeviceID = model.general.barkDevices.first?.id }
         }
-        .onChange(of: model.general.barkDevices.map(\.id)) { _, deviceIDs in
+        .onChange(of: model.general.barkDevices.map(\.id)) { deviceIDs in
             if selectedDeviceID.map(deviceIDs.contains) != true {
                 selectedDeviceID = deviceIDs.first
             }

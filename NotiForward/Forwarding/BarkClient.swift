@@ -82,7 +82,7 @@ struct BarkClient: Sendable {
               let scheme = base.scheme, ["http", "https"].contains(scheme), base.host != nil else {
             throw BarkError.invalidServerURL
         }
-        var request = URLRequest(url: base.appending(path: path))
+        var request = URLRequest(url: base.appendingPathComponent(path))
         request.httpMethod = "POST"
         request.timeoutInterval = 15
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")

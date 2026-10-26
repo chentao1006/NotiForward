@@ -16,12 +16,25 @@ let realHomeDirectory: URL = {
 /// for Safari), so the app needs neither Full Disk Access nor anything outside this folder.
 @MainActor
 enum NotificationFolderAccess {
-    static let folderName = "group.com.apple.usernoted"
-    private static let defaultsKey = "NotificationFolderBookmark"
+    private static var usesLegacyLocation: Bool {
+        ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 15
+    }
+    static var folderName: String {
+        usesLegacyLocation ? "com.apple.notificationcenter" : "group.com.apple.usernoted"
+    }
+    private static var defaultsKey: String {
+        // Keep the existing key on macOS 15+ so upgrades retain the user's access grant.
+        usesLegacyLocation ? "NotificationFolderBookmark.Legacy" : "NotificationFolderBookmark"
+    }
 
-    /// ~/Library/Group Containers/group.com.apple.usernoted
+    /// Monterey through Sonoma use DARWIN_USER_DIR; Sequoia and later use the group container.
     static var expectedFolder: URL {
-        realHomeDirectory.appending(path: "Library/Group Containers/\(folderName)", directoryHint: .isDirectory)
+        if usesLegacyLocation {
+            return darwinUserDirectory.appendingPathComponent(folderName, isDirectory: true)
+        }
+        return realHomeDirectory
+            .appendingPathComponent("Library/Group Containers", isDirectory: true)
+            .appendingPathComponent(folderName, isDirectory: true)
     }
 
     /// Resolves the saved bookmark, refreshing it when macOS reports it stale.
@@ -57,7 +70,7 @@ enum NotificationFolderAccess {
         panel.allowsMultipleSelection = false
         panel.showsHiddenFiles = true
         panel.directoryURL = expectedFolder
-        NSApp.activate()
+        NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return false }
         guard url.lastPathComponent == folderName else {
             Log.capture.error("Wrong folder selected: \(url.path, privacy: .public)")
@@ -80,3 +93,17 @@ enum NotificationFolderAccess {
         Log.capture.notice("Notification folder access invalidated: \(reason, privacy: .public)")
     }
 }
+
+/// `getconf DARWIN_USER_DIR` without launching a subprocess. On macOS 12–14 Notification Center
+/// stores its database below this per-user directory rather than in the home Library.
+private let darwinUserDirectory: URL = {
+    let key = Int32(_CS_DARWIN_USER_DIR)
+    let length = confstr(key, nil, 0)
+    guard length > 0 else { return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true) }
+    var buffer = [CChar](repeating: 0, count: length)
+    guard confstr(key, &buffer, length) > 0 else {
+        return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+    }
+    let bytes = buffer.prefix { $0 != 0 }.map(UInt8.init(bitPattern:))
+    return URL(fileURLWithPath: String(decoding: bytes, as: UTF8.self), isDirectory: true)
+}()

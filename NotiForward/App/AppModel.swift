@@ -1,26 +1,25 @@
 import AppKit
+import Combine
 import Foundation
-import Observation
 import ServiceManagement
 
 @MainActor
-@Observable
-final class AppModel {
+final class AppModel: ObservableObject {
     enum CaptureStatus: Equatable { case starting, running, permissionRequired, failed(String) }
     enum TestStatus: Equatable { case idle, sending, succeeded, failed(String) }
     enum SettingsTab: Hashable { case general, rules, client }
 
-    var general = GeneralSettings()
-    var rules = RuleConfiguration.initial
-    var catalog: [CatalogApp] = []
-    var captureStatus: CaptureStatus = .starting
-    var isPaused = false
-    var isMenuBarVisible = true
-    var lastForwardedAt: Date?
-    var deliveryError: String?
-    var testStatus: TestStatus = .idle
+    @Published var general = GeneralSettings()
+    @Published var rules = RuleConfiguration.initial
+    @Published var catalog: [CatalogApp] = []
+    @Published var captureStatus: CaptureStatus = .starting
+    @Published var isPaused = false
+    @Published var isMenuBarVisible = true
+    @Published var lastForwardedAt: Date?
+    @Published var deliveryError: String?
+    @Published var testStatus: TestStatus = .idle
     // Until Bark is set up there is nothing to forward to, so Settings starts on the client tab.
-    var settingsTab: SettingsTab = AppModel.isBarkConfigured ? .general : .client
+    @Published var settingsTab: SettingsTab = AppModel.isBarkConfigured ? .general : .client
 
     let language = LanguageBundle.shared
 #if !APP_STORE
@@ -35,7 +34,7 @@ final class AppModel {
     private var coordinator: ForwardCoordinator?
     private var monitorTask: Task<Void, Never>?
     private var registrationTasks: [UUID: Task<Void, Never>] = [:]
-    var registeringDeviceIDs: Set<UUID> = []
+    @Published var registeringDeviceIDs: Set<UUID> = []
     private var hasStarted = false
 
     /// Mirrors whether a Bark key is saved, readable synchronously when scenes are built at launch.
@@ -75,7 +74,7 @@ final class AppModel {
             guard let folder = NotificationFolderAccess.resolveFolder() else {
                 if captureStatus != .permissionRequired { Log.capture.notice("Waiting for notification folder access") }
                 captureStatus = .permissionRequired
-                try? await Task.sleep(for: .seconds(2))
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
                 continue
             }
             let scoped = folder.startAccessingSecurityScopedResource()
@@ -112,9 +111,9 @@ final class AppModel {
                     }
                     // Sleep until Notification Center writes its database. The timeout is only a
                     // safety net, shorter while a failed delivery is waiting to be retried.
-                    await monitor.waitForChange(timeout: .seconds(deliveryError == nil ? 60 : 5))
+                    await monitor.waitForChange(timeout: deliveryError == nil ? 60 : 5)
                     // Notification Center writes several times per notification; let it settle.
-                    try? await Task.sleep(for: .milliseconds(150))
+                    try? await Task.sleep(nanoseconds: 150_000_000)
                 }
             } catch NotificationDatabaseError.permissionDenied {
                 if captureStatus != .permissionRequired {
@@ -125,7 +124,7 @@ final class AppModel {
                 Log.capture.error("Capture failed: \(error.localizedDescription, privacy: .public)")
                 captureStatus = .failed(error.localizedDescription)
             }
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
         }
     }
 
@@ -319,6 +318,18 @@ final class AppModel {
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {
+        if #available(macOS 13.0, *) {
+            setModernLaunchAtLogin(enabled)
+        } else {
+            // SMLoginItemSetEnabled works for the main application on Monterey. It is deprecated
+            // on newer systems, where SMAppService is used above instead.
+            let succeeded = SMLoginItemSetEnabled(Bundle.main.bundleIdentifier! as CFString, enabled)
+            if !succeeded { general.launchAtLogin.toggle() }
+        }
+    }
+
+    @available(macOS 13.0, *)
+    private func setModernLaunchAtLogin(_ enabled: Bool) {
         do {
             if enabled && SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
             if !enabled && SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }

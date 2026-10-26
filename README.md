@@ -12,7 +12,7 @@ NotiForward (知会) is a macOS menu bar app that forwards the Mac notifications
   ```
 - **Mac App Store**: the same app, with every feature included.
 
-Requires macOS 15 or later.
+Requires macOS 12 or later.
 
 ## Setup
 

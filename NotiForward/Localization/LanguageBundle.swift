@@ -1,5 +1,5 @@
 import Foundation
-import Observation
+import Combine
 
 /// Runtime language switching.
 ///
@@ -7,17 +7,16 @@ import Observation
 /// so every user-visible string goes through `L(_:)`, which reads from the `.lproj` bundle of the
 /// language chosen in Settings. Views re-render on change because they are keyed by `language`.
 @MainActor
-@Observable
-final class LanguageBundle {
+final class LanguageBundle: ObservableObject {
     static let shared = LanguageBundle()
 
     /// Mirror of `bundle` for nonisolated callers such as `LocalizedError.errorDescription`.
     /// Only written on the main actor.
     nonisolated(unsafe) fileprivate static var currentBundle: Bundle = .main
 
-    private(set) var language: AppLanguage = .system
-    private(set) var bundle: Bundle = .main
-    private(set) var locale: Locale = .current
+    @Published private(set) var language: AppLanguage = .system
+    @Published private(set) var bundle: Bundle = .main
+    @Published private(set) var locale: Locale = .current
 
     private init() { apply(.system) }
 

@@ -1,13 +1,15 @@
 import SwiftUI
 
 struct GeneralSettingsView: View {
-    @Bindable var model: AppModel
+    @ObservedObject var model: AppModel
 
     var body: some View {
         Form {
             Section {
                 accessRow
-                LabeledContent(L("Last forwarded")) {
+                HStack {
+                    Text(L("Last forwarded"))
+                    Spacer()
                     Text(model.lastForwardedAt.map { $0.formatted(.dateTime.locale(model.language.locale)) } ?? "—")
                 }
             } header: {
@@ -20,7 +22,7 @@ struct GeneralSettingsView: View {
             }
             Section(L("App")) {
                 Toggle(L("Launch at login"), isOn: $model.general.launchAtLogin)
-                    .onChange(of: model.general.launchAtLogin) { _, _ in model.saveSettings() }
+                    .onChange(of: model.general.launchAtLogin) { _ in model.saveSettings() }
                 Toggle(L("Show menu bar icon"), isOn: Binding(
                     get: { model.isMenuBarVisible },
                     set: { visible in visible ? model.restoreMenuBar() : model.hideMenuBar() }
@@ -29,10 +31,9 @@ struct GeneralSettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section(L("Updates")) {
-                LabeledContent(L("Version"), value: model.appVersion)
+                HStack { Text(L("Version")); Spacer(); Text(model.appVersion) }
 #if !APP_STORE
-                @Bindable var updater = model.updater
-                Toggle(L("Automatically check for updates"), isOn: $updater.automaticallyChecks)
+                UpdateSettingsView(updater: model.updater)
                 HStack {
                     Spacer()
                     Button(L("Check for Updates…")) { model.updater.checkForUpdates() }
@@ -43,14 +44,15 @@ struct GeneralSettingsView: View {
                 Picker(L("App language"), selection: $model.general.language) {
                     ForEach(AppLanguage.allCases) { language in Text(name(of: language)).tag(language) }
                 }
-                .onChange(of: model.general.language) { _, _ in model.saveSettings() }
+                .onChange(of: model.general.language) { _ in model.saveSettings() }
             }
         }
-        .formStyle(.grouped)
     }
 
     @ViewBuilder private var accessRow: some View {
-        LabeledContent(L("Notification access")) {
+        HStack {
+            Text(L("Notification access"))
+            Spacer()
             switch model.captureStatus {
             case .permissionRequired:
                 Button(L("Grant Access…")) { model.requestNotificationAccess() }
@@ -83,3 +85,13 @@ struct GeneralSettingsView: View {
         }
     }
 }
+
+#if !APP_STORE
+private struct UpdateSettingsView: View {
+    @ObservedObject var updater: Updater
+
+    var body: some View {
+        Toggle(L("Automatically check for updates"), isOn: $updater.automaticallyChecks)
+    }
+}
+#endif

@@ -31,7 +31,7 @@ actor NotificationDatabaseReader {
     /// `folder` is the granted group.com.apple.usernoted folder; its security scope must be active.
     init(folder: URL) throws {
         let connection = NotificationSQLiteConnection()
-        let candidates = ["db2/db", "db/db"].map { folder.appending(path: $0).path }
+        let candidates = ["db2/db", "db/db"].map { folder.appendingPathComponent($0).path }
         guard let path = candidates.first(where: FileManager.default.fileExists(atPath:)) else {
             throw NotificationDatabaseError.notFound
         }

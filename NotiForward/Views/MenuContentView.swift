@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 
 struct MenuContentView: View {
-    @Bindable var model: AppModel
-    @Environment(\.openWindow) private var openWindow
+    @ObservedObject var model: AppModel
+    let openSettings: () -> Void
 
     var body: some View {
         Group {
@@ -27,7 +27,7 @@ struct MenuContentView: View {
 #endif
             Button(L("Settings…")) {
                 model.restoreMenuBar()
-                openSettingsWindow(openWindow)
+                openSettings()
             }
             .keyboardShortcut(",")
             Divider()
@@ -58,10 +58,4 @@ struct MenuContentView: View {
             return model.isPaused ? "pause.circle.fill" : "checkmark.circle.fill"
         }
     }
-}
-
-@MainActor
-func openSettingsWindow(_ openWindow: OpenWindowAction) {
-    openWindow(id: "settings")
-    NSApp.activate()
 }

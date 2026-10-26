@@ -42,7 +42,7 @@ enum AppCatalog {
     static func load() -> [CatalogApp] {
         let roots = [
             URL(fileURLWithPath: "/Applications"),
-            realHomeDirectory.appending(path: "Applications"),
+            realHomeDirectory.appendingPathComponent("Applications", isDirectory: true),
             URL(fileURLWithPath: "/System/Applications"),
             URL(fileURLWithPath: "/System/Applications/Utilities")
         ]

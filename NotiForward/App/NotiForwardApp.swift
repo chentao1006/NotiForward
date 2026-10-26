@@ -1,15 +1,27 @@
 import AppKit
+import Combine
 import SwiftUI
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    /// True when macOS started the app as a login item; launch is then silent (menu bar icon only).
-    @MainActor private(set) static var launchedAsLoginItem = false
+@main
+enum NotiForwardMain {
+    static func main() {
+        let application = NSApplication.shared
+        let delegate = AppDelegate()
+        application.delegate = delegate
+        withExtendedLifetime(delegate) { application.run() }
+    }
+}
 
-    /// A menu bar app keeps running with no windows; without this, closing Settings quits the app.
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+    private(set) static var launchedAsLoginItem = false
+
+    private let model = AppModel()
+    private var statusItem: NSStatusItem?
+    private var settingsWindow: NSWindow?
+    private var cancellables: Set<AnyCancellable> = []
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        // Automatic termination would also quit a windowless app that is still forwarding.
         ProcessInfo.processInfo.disableAutomaticTermination("Forwarding notifications")
         guard let event = NSAppleEventManager.shared().currentAppleEvent else { return }
         Self.launchedAsLoginItem = event.eventID == kAEOpenApplication
@@ -17,69 +29,132 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
         AnalyticsManager.shared.start()
-        guard Self.launchedAsLoginItem else { return }
-        // Backstop in case a window was created before the launch kind was known.
-        DispatchQueue.main.async {
-            NSApp.windows.filter { $0.isVisible && $0.canBecomeMain }.forEach { $0.close() }
-            NSApp.setActivationPolicy(.accessory)
-        }
+        observeModel()
+        updateStatusItem()
+        Task { await model.start() }
+        if !Self.launchedAsLoginItem && !AppModel.isBarkConfigured { showSettings() }
     }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        NotificationCenter.default.post(name: .restoreMenuBar, object: nil)
+        model.restoreMenuBar()
+        showSettings()
         return true
     }
-}
 
-extension Notification.Name {
-    static let restoreMenuBar = Notification.Name("NotiForward.restoreMenuBar")
-}
+    func windowWillClose(_ notification: Notification) { NSApp.setActivationPolicy(.accessory) }
 
-@main
-struct NotiForwardApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @State private var model = AppModel()
+    private func observeModel() {
+        model.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in DispatchQueue.main.async { self?.updateStatusItem() } }
+            .store(in: &cancellables)
+    }
 
-    var body: some Scene {
-        MenuBarExtra(isInserted: $model.isMenuBarVisible) {
-            MenuContentView(model: model)
-                .environment(\.locale, model.language.locale)
-        } label: {
-            MenuBarLabel(model: model)
+    private func updateStatusItem() {
+        guard model.isMenuBarVisible else {
+            if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
+            statusItem = nil
+            return
         }
-        .menuBarExtraStyle(.menu)
+        if statusItem == nil { statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength) }
+        statusItem?.button?.image = NSImage(
+            systemSymbolName: model.isForwarding ? "bell.and.waves.left.and.right" : "bell.slash",
+            accessibilityDescription: appName
+        )
+        statusItem?.menu = makeMenu()
+    }
 
-        Window(appName, id: "settings") {
-            SettingsView(model: model)
+    private func makeMenu() -> NSMenu {
+        let menu = NSMenu()
+        addItem(statusText, image: statusIcon, enabled: false, to: menu)
+        if let error = model.deliveryError {
+            addItem(error, enabled: false, to: menu)
+        } else if let date = model.lastForwardedAt {
+            let formatter = DateFormatter()
+            formatter.locale = model.language.locale
+            formatter.timeStyle = .short
+            formatter.dateStyle = .none
+            addItem(L("Last forwarded: \(formatter.string(from: date))"), enabled: false, to: menu)
+        }
+        menu.addItem(.separator())
+        addItem(model.isPaused ? L("Resume Forwarding") : L("Pause Forwarding"), action: #selector(togglePaused),
+                enabled: model.general.isBarkConfigured, to: menu)
+        addItem(L("Send Test Notification"), action: #selector(sendTest),
+                enabled: model.general.isBarkConfigured, to: menu)
+#if !APP_STORE
+        addItem(L("Check for Updates…"), action: #selector(checkForUpdates), to: menu)
+#endif
+        let settings = addItem(L("Settings…"), action: #selector(showSettings), to: menu)
+        settings.keyEquivalent = ","
+        menu.addItem(.separator())
+        let quit = addItem(L("Quit \(appName)"), action: #selector(quit), to: menu)
+        quit.keyEquivalent = "q"
+        return menu
+    }
+
+    @discardableResult
+    private func addItem(_ title: String, image: String? = nil, action: Selector? = nil,
+                         enabled: Bool = true, to menu: NSMenu) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = self
+        item.isEnabled = enabled
+        if let image { item.image = NSImage(systemSymbolName: image, accessibilityDescription: nil) }
+        menu.addItem(item)
+        return item
+    }
+
+    private var statusText: String {
+        switch model.captureStatus {
+        case .starting: return L("Starting…")
+        case .permissionRequired: return L("Notification folder access is required")
+        case .failed(let message): return message
+        case .running:
+            if !model.general.isBarkConfigured { return L("Bark device key is not set") }
+            if model.isPaused { return L("Forwarding is paused") }
+            return L("Forwarding to Bark")
+        }
+    }
+
+    private var statusIcon: String {
+        switch model.captureStatus {
+        case .starting: return "clock"
+        case .permissionRequired, .failed: return "exclamationmark.triangle.fill"
+        case .running:
+            if !model.general.isBarkConfigured { return "exclamationmark.triangle.fill" }
+            return model.isPaused ? "pause.circle.fill" : "checkmark.circle.fill"
+        }
+    }
+
+    @objc private func togglePaused() { model.togglePaused() }
+    @objc private func sendTest() { model.sendTest() }
+#if !APP_STORE
+    @objc private func checkForUpdates() { model.updater.checkForUpdates() }
+#endif
+    @objc private func quit() { NSApp.terminate(nil) }
+
+    @objc private func showSettings() {
+        model.restoreMenuBar()
+        if settingsWindow == nil {
+            let controller = NSHostingController(rootView: SettingsView(model: model)
                 .environment(\.locale, model.language.locale)
                 .frame(width: 500)
-                .frame(minHeight: 460, idealHeight: 580)
-                .onReceive(NotificationCenter.default.publisher(for: .restoreMenuBar)) { _ in
-                    model.restoreMenuBar()
-                }
+                .frame(minHeight: 460, idealHeight: 580))
+            let window = NSWindow(contentViewController: controller)
+            window.title = appName
+            window.styleMask = [NSWindow.StyleMask.titled, .closable, .miniaturizable, .resizable]
+            window.setContentSize(NSSize(width: 500, height: 580))
+            window.center()
+            window.isReleasedWhenClosed = false
+            window.delegate = self
+            settingsWindow = window
         }
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
-        // Never reopen Settings from the previous session, so a login launch stays silent.
-        .restorationBehavior(.disabled)
-        // Settings opens by itself at launch until a Bark key has been entered, except at login.
-        .defaultLaunchBehavior(AppModel.isBarkConfigured || AppDelegate.launchedAsLoginItem ? .suppressed : .presented)
-    }
-}
-
-/// The label is rendered at launch, so it is where capture starts. Opening the app again
-/// (Finder, Spotlight, Launchpad) brings up Settings.
-private struct MenuBarLabel: View {
-    let model: AppModel
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        Image(systemName: model.isForwarding ? "bell.and.waves.left.and.right" : "bell.slash")
-            .task { await model.start() }
-            .onReceive(NotificationCenter.default.publisher(for: .restoreMenuBar)) { _ in
-                model.restoreMenuBar()
-                openSettingsWindow(openWindow)
-            }
+        settingsWindow?.title = appName
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
 }

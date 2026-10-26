@@ -24,7 +24,7 @@ final class DatabaseChangeMonitor: @unchecked Sendable {
 
     /// Returns after the database changes, or after `timeout` as a safety net for missed events.
     /// A change that arrives while nobody is waiting is remembered, so the next call returns at once.
-    func waitForChange(timeout: Duration) async {
+    func waitForChange(timeout: TimeInterval) async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             queue.async {
                 if self.hasPendingChange {
@@ -35,7 +35,7 @@ final class DatabaseChangeMonitor: @unchecked Sendable {
                 self.waitGeneration += 1
                 let generation = self.waitGeneration
                 self.waiter = continuation
-                self.queue.asyncAfter(deadline: .now() + .seconds(Int(timeout.components.seconds))) {
+                self.queue.asyncAfter(deadline: .now() + timeout) {
                     guard self.waitGeneration == generation else { return }
                     self.resumeWaiter()
                 }

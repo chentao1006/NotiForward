@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct SettingsView: View {
-    @Bindable var model: AppModel
+    @ObservedObject var model: AppModel
 
     var body: some View {
         TabView(selection: $model.settingsTab) {
@@ -17,12 +17,6 @@ struct SettingsView: View {
                 .tag(AppModel.SettingsTab.client)
         }
         .id(model.language.language)
-        .task { await model.start() }
-        // The app is a menu bar agent (LSUIElement); show a Dock icon only while Settings is open.
-        .onAppear {
-            NSApp.setActivationPolicy(.regular)
-            NSApp.activate()
-        }
-        .onDisappear { NSApp.setActivationPolicy(.accessory) }
+        .environment(\.locale, model.language.locale)
     }
 }

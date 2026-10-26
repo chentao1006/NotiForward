@@ -27,9 +27,9 @@ actor LocalStore {
         guard let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             throw LocalStoreError.unavailableContainer
         }
-        let directory = applicationSupport.appending(path: "NotiForward", directoryHint: .isDirectory)
+        let directory = applicationSupport.appendingPathComponent("NotiForward", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let url = directory.appending(path: "noti-forward.sqlite")
+        let url = directory.appendingPathComponent("noti-forward.sqlite")
 #if !APP_STORE
         Self.migrateFromUnsandboxedLocation(to: url)
 #endif
@@ -51,7 +51,7 @@ actor LocalStore {
     private static func migrateFromUnsandboxedLocation(to url: URL) {
         let fileManager = FileManager.default
         guard !fileManager.fileExists(atPath: url.path) else { return }
-        let legacy = realHomeDirectory.appending(path: "Library/Application Support/NotiForward/noti-forward.sqlite")
+        let legacy = realHomeDirectory.appendingPathComponent("Library/Application Support/NotiForward/noti-forward.sqlite")
         guard legacy.path != url.path, fileManager.fileExists(atPath: legacy.path) else { return }
         for suffix in ["", "-wal", "-shm"] {
             let source = URL(fileURLWithPath: legacy.path + suffix)

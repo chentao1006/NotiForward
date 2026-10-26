@@ -1,20 +1,19 @@
 #if !APP_STORE
 import AppKit
-import Observation
+import Combine
 import Sparkle
 
 /// Sparkle updates for the direct download. The App Store build is updated by the App Store,
 /// so this file isn't compiled into it.
 @MainActor
-@Observable
-final class Updater {
-    @ObservationIgnored private let reminders = UpdateReminders()
-    @ObservationIgnored private lazy var controller = SPUStandardUpdaterController(
+final class Updater: ObservableObject {
+    private let reminders = UpdateReminders()
+    private lazy var controller = SPUStandardUpdaterController(
         startingUpdater: true, updaterDelegate: nil, userDriverDelegate: reminders
     )
 
     /// Mirrors Sparkle's setting so SwiftUI can observe it.
-    var automaticallyChecks: Bool {
+    @Published var automaticallyChecks: Bool {
         didSet { controller.updater.automaticallyChecksForUpdates = automaticallyChecks }
     }
 
@@ -25,7 +24,7 @@ final class Updater {
 
     func checkForUpdates() {
         // A menu bar app isn't frontmost, so Sparkle's window would open behind other apps.
-        NSApp.activate()
+        NSApp.activate(ignoringOtherApps: true)
         controller.checkForUpdates(nil)
     }
 }
@@ -35,7 +34,7 @@ private final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate {
     var supportsGentleScheduledUpdateReminders: Bool { true }
 
     func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
-        NSApp.activate()
+        Task { @MainActor in NSApp.activate(ignoringOtherApps: true) }
     }
 }
 #endif

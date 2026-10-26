@@ -2,7 +2,7 @@ name: NotiForward
 options:
   bundleIdPrefix: com.ct106
   deploymentTarget:
-    macOS: "15.0"
+    macOS: "12.0"
   developmentLanguage: en
   xcodeVersion: "27.1"
 settings:

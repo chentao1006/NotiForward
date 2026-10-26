@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct RulesSettingsView: View {
-    @Bindable var model: AppModel
+    @ObservedObject var model: AppModel
     @State private var isChoosingApps = false
     @State private var selectedAppID: String?
 
@@ -20,7 +20,7 @@ struct RulesSettingsView: View {
                     Text(L("Only forward selected apps")).tag(AppFilterMode.onlyAllowed)
                     Text(L("Forward all except selected apps")).tag(AppFilterMode.allExceptBlocked)
                 }
-                .onChange(of: model.rules.appMode) { _, _ in model.saveSettings() }
+                .onChange(of: model.rules.appMode) { _ in model.saveSettings() }
                 VStack(spacing: 0) {
                     List(selectedApps, selection: $selectedAppID) { app in
                         HStack(spacing: 10) {
@@ -84,29 +84,37 @@ struct RulesSettingsView: View {
 
             Section {
                 Toggle(L("Enable keyword filtering"), isOn: $model.rules.keywordFilteringEnabled)
-                    .onChange(of: model.rules.keywordFilteringEnabled) { _, _ in model.saveSettings() }
+                    .onChange(of: model.rules.keywordFilteringEnabled) { _ in model.saveSettings() }
                 Group {
                     Picker(L("Keyword strategy"), selection: $model.rules.keywordMode) {
                         Text(L("Block matching notifications")).tag(KeywordFilterMode.blocked)
                         Text(L("Only forward matching notifications")).tag(KeywordFilterMode.allowed)
                     }
-                    .onChange(of: model.rules.keywordMode) { _, _ in model.saveSettings() }
-                    TextField(L("Keywords"), text: Binding(
-                        get: { model.rules.keywords.joined(separator: "\n") },
-                        set: { model.rules.keywords = $0.components(separatedBy: .newlines); model.saveSettings() }
-                    ), prompt: Text(L("One keyword per line")), axis: .vertical)
-                    .labelsHidden()
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(4...8)
+                    .onChange(of: model.rules.keywordMode) { _ in model.saveSettings() }
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: Binding(
+                            get: { model.rules.keywords.joined(separator: "\n") },
+                            set: { model.rules.keywords = $0.components(separatedBy: .newlines); model.saveSettings() }
+                        ))
+                        .font(.body)
+                        if model.rules.keywords.joined().isEmpty {
+                            Text(L("One keyword per line"))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                    .frame(minHeight: 78, maxHeight: 150)
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.secondary.opacity(0.35)))
                 }
                 .disabled(!model.rules.keywordFilteringEnabled)
             } header: {
                 Text(L("Keywords"))
             }
         }
-        .formStyle(.grouped)
         .sheet(isPresented: $isChoosingApps) { AppPickerView(model: model) }
-        .onChange(of: selectedApps.map(\.bundleID)) { _, appIDs in
+        .onChange(of: selectedApps.map(\.bundleID)) { appIDs in
             if selectedAppID.map(appIDs.contains) != true {
                 selectedAppID = appIDs.first
             }
@@ -120,7 +128,7 @@ struct RulesSettingsView: View {
 }
 
 private struct AppPickerView: View {
-    @Bindable var model: AppModel
+    @ObservedObject var model: AppModel
     @Environment(\.dismiss) private var dismiss
     @State private var search = ""
 
@@ -155,7 +163,6 @@ private struct AppPickerView: View {
                 .padding(.vertical, 2)
             }
             .listStyle(.bordered)
-            .alternatingRowBackgrounds()
 
             HStack {
                 Spacer()
