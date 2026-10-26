@@ -3,6 +3,14 @@
     <channel>
         <title>NotiForward</title>
         <item>
+            <title>1.2.0</title>
+            <pubDate>Mon, 26 Oct 2026 20:37:35 +0800</pubDate>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/chentao1006/NotiForward/releases/download/v1.2.0/NotiForward.dmg" length="2204464" type="application/octet-stream" sparkle:edSignature="mjz3HdXmSUDhHBnlrz9OMr7Aa7ZXU2g0TAwcE22+GpUEKfiWchn1+2hVqsDsAs6UGZoCL7qrvb7xbEPzHGKsCw=="/>
+        </item>
+        <item>
             <title>1.1.1</title>
             <pubDate>Mon, 26 Oct 2026 17:34:52 +0800</pubDate>
             <sparkle:version>6</sparkle:version>
