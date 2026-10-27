@@ -57,7 +57,7 @@ struct BarkClient: Sendable {
         guard configuration.isConfigured else { throw BarkError.notConfigured }
         _ = try await post("push", configuration: configuration, body: Payload(
             deviceKey: configuration.trimmedKey,
-            title: message.title,
+            title: sourcedTitle(message.title),
             subtitle: message.subtitle.isEmpty ? nil : message.subtitle,
             body: message.body,
             group: message.group,
@@ -65,6 +65,14 @@ struct BarkClient: Sendable {
             url: message.url,
             icon: message.icon
         ))
+    }
+
+    private func sourcedTitle(_ title: String) -> String {
+        let computerName = Host.current().localizedName?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let source = computerName.flatMap { $0.isEmpty ? nil : $0 } ?? "Mac"
+        let original = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return original.isEmpty ? "[\(source)]" : "\(original)[\(source)]"
     }
 
     /// Exchanges an APNs device token for a device key through `POST {server}/register`,

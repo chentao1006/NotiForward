@@ -9,8 +9,8 @@ settings:
   base:
     DEVELOPMENT_TEAM: U2NEAJ73J2
     SWIFT_VERSION: "6.0"
-    CURRENT_PROJECT_VERSION: 9
-    MARKETING_VERSION: 1.3.1
+    CURRENT_PROJECT_VERSION: 10
+    MARKETING_VERSION: 1.3.2
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
     OTHER_LDFLAGS: "$(inherited) -lsqlite3"
@@ -38,7 +38,30 @@ targetTemplates:
         GENERATE_INFOPLIST_FILE: NO
         LOCALIZATION_PREFERS_STRING_CATALOGS: YES
         SWIFT_EMIT_LOC_STRINGS: YES
+    dependencies:
+      - target: NotiForwardLoginItem
+        embed: true
+        codeSign: true
+        copy:
+          destination: wrapper
+          subpath: Contents/Library/LoginItems
 targets:
+  NotiForwardLoginItem:
+    type: application
+    platform: macOS
+    sources:
+      - path: LoginItem
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ct106.notiforward.LoginItem
+        PRODUCT_NAME: NotiForwardLoginItem
+        INFOPLIST_FILE: LoginItem/Info.plist
+        CODE_SIGN_ENTITLEMENTS: LoginItem/LoginItem.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
   # Direct download (Developer ID, notarized DMG), updated with Sparkle.
   NotiForward:
     templates: [NotiForwardApp]

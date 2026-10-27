@@ -21,8 +21,10 @@ struct GeneralSettingsView: View {
                 }
             }
             Section(L("App")) {
-                Toggle(L("Launch at login"), isOn: $model.general.launchAtLogin)
-                    .onChange(of: model.general.launchAtLogin) { _ in model.saveSettings() }
+                Toggle(L("Launch at login"), isOn: Binding(
+                    get: { model.general.launchAtLogin },
+                    set: { model.updateLaunchAtLogin($0) }
+                ))
                 Toggle(L("Show menu bar icon"), isOn: Binding(
                     get: { model.isMenuBarVisible },
                     set: { visible in visible ? model.restoreMenuBar() : model.hideMenuBar() }

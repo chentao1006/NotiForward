@@ -23,6 +23,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.disableAutomaticTermination("Forwarding notifications")
+        if CommandLine.arguments.contains("--notiforward-login-item") {
+            Self.launchedAsLoginItem = true
+            return
+        }
         guard let event = NSAppleEventManager.shared().currentAppleEvent else { return }
         Self.launchedAsLoginItem = event.eventID == kAEOpenApplication
             && event.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
@@ -61,10 +65,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return
         }
         if statusItem == nil { statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength) }
-        statusItem?.button?.image = NSImage(
-            systemSymbolName: model.isForwarding ? "bell.and.waves.left.and.right" : "bell.slash",
-            accessibilityDescription: appName
-        )
+        let preferredSymbol = model.isForwarding ? "bell.and.waves.left.and.right" : "bell.slash"
+        let fallbackSymbol = model.isForwarding ? "bell" : "bell.slash"
+        let image = NSImage(systemSymbolName: preferredSymbol, accessibilityDescription: appName)
+            ?? NSImage(systemSymbolName: fallbackSymbol, accessibilityDescription: appName)
+            ?? NSImage(systemSymbolName: "bell", accessibilityDescription: appName)
+        image?.isTemplate = true
+        statusItem?.button?.image = image
         statusItem?.menu = makeMenu()
     }
 

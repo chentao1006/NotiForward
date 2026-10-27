@@ -167,7 +167,9 @@ final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         #expect(StubURLProtocol.lastRequest?.url?.absoluteString == "https://bark.example.com/push")
         #expect(StubURLProtocol.lastRequest?.httpMethod == "POST")
         #expect(StubURLProtocol.lastBody["device_key"] as? String == "KEY123")
-        #expect(StubURLProtocol.lastBody["title"] as? String == "T")
+        let sentTitle = StubURLProtocol.lastBody["title"] as? String
+        #expect(sentTitle?.hasPrefix("T[") == true)
+        #expect(sentTitle?.hasSuffix("]") == true)
         #expect(StubURLProtocol.lastBody["body"] as? String == "B")
         #expect(StubURLProtocol.lastBody["group"] as? String == "G")
         #expect(StubURLProtocol.lastBody["level"] as? String == "timeSensitive")

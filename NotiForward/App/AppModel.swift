@@ -5,6 +5,8 @@ import ServiceManagement
 
 @MainActor
 final class AppModel: ObservableObject {
+    private static let legacyLoginItemBundleIdentifier = "com.ct106.notiforward.LoginItem"
+    private static let legacyLoginItemEnabledKey = "legacyLoginItemEnabled"
     enum CaptureStatus: Equatable { case starting, running, permissionRequired, failed(String) }
     enum TestStatus: Equatable { case idle, sending, succeeded, failed(String) }
     enum SettingsTab: Hashable { case general, rules, client }
@@ -50,6 +52,11 @@ final class AppModel: ObservableObject {
             let loaded = try await store.loadSettings()
             general = loaded.0
             rules = loaded.1
+            if #available(macOS 13.0, *) {
+                general.launchAtLogin = SMAppService.mainApp.status == .enabled
+            } else {
+                general.launchAtLogin = UserDefaults.standard.bool(forKey: Self.legacyLoginItemEnabledKey)
+            }
             normalizeSharedBarkSettings()
             // Persist generated device IDs immediately when upgrading a legacy single-key configuration.
             try await store.save(general: general)
@@ -141,7 +148,6 @@ final class AppModel: ObservableObject {
 
     func saveSettings() {
         language.apply(general.language)
-        setLaunchAtLogin(general.launchAtLogin)
         UserDefaults.standard.set(general.isBarkConfigured, forKey: "barkConfigured")
         guard let store else { return }
         rules.updatedAt = Date()
@@ -316,24 +322,20 @@ final class AppModel: ObservableObject {
         NotificationFolderAccess.request()
     }
 
-    private func setLaunchAtLogin(_ enabled: Bool) {
+    func updateLaunchAtLogin(_ enabled: Bool) {
         if #available(macOS 13.0, *) {
-            setModernLaunchAtLogin(enabled)
-        } else {
-            // SMLoginItemSetEnabled works for the main application on Monterey. It is deprecated
-            // on newer systems, where SMAppService is used above instead.
-            let succeeded = SMLoginItemSetEnabled(Bundle.main.bundleIdentifier! as CFString, enabled)
-            if !succeeded { general.launchAtLogin.toggle() }
-        }
-    }
-
-    @available(macOS 13.0, *)
-    private func setModernLaunchAtLogin(_ enabled: Bool) {
-        do {
-            if enabled && SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
-            if !enabled && SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
-        } catch {
+            do {
+                if enabled && SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
+                if !enabled && SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
+            } catch {}
             general.launchAtLogin = SMAppService.mainApp.status == .enabled
+        } else {
+            let succeeded = SMLoginItemSetEnabled(Self.legacyLoginItemBundleIdentifier as CFString, enabled)
+            if succeeded {
+                UserDefaults.standard.set(enabled, forKey: Self.legacyLoginItemEnabledKey)
+                general.launchAtLogin = enabled
+            }
         }
+        saveSettings()
     }
 }
