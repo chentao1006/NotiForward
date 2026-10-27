@@ -173,7 +173,7 @@ cask "$CASK_TOKEN" do
   desc "Forward selected notifications to your iPhone through Bark"
   homepage "https://notiforward.ct106.com/"
 
-  depends_on macos: :sequoia
+  depends_on macos: :monterey
 
   app "$APP_NAME.app"
 
