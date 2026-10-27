@@ -18,8 +18,7 @@ final class AppModel: ObservableObject {
     @Published var lastForwardedAt: Date?
     @Published var deliveryError: String?
     @Published var testStatus: TestStatus = .idle
-    // Until Bark is set up there is nothing to forward to, so Settings starts on the client tab.
-    @Published var settingsTab: SettingsTab = AppModel.isBarkConfigured ? .general : .client
+    @Published var settingsTab: SettingsTab = .general
 
     let language = LanguageBundle.shared
 #if !APP_STORE

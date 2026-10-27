@@ -5,6 +5,7 @@ struct RulesSettingsView: View {
     @ObservedObject var model: AppModel
     @State private var isChoosingApps = false
     @State private var selectedAppID: String?
+    @State private var pendingAppRemovalID: String?
 
     /// Selected apps, including ones not found in the scanned folders.
     private var selectedApps: [CatalogApp] {
@@ -14,7 +15,7 @@ struct RulesSettingsView: View {
     }
 
     var body: some View {
-        Form {
+        SettingsForm {
             Section {
                 Picker(L("Forwarding strategy"), selection: $model.rules.appMode) {
                     Text(L("Only forward selected apps")).tag(AppFilterMode.onlyAllowed)
@@ -22,12 +23,15 @@ struct RulesSettingsView: View {
                 }
                 .onChange(of: model.rules.appMode) { _ in model.saveSettings() }
                 VStack(spacing: 0) {
-                    List(selectedApps, selection: $selectedAppID) { app in
+                    List(selectedApps) { app in
                         HStack(spacing: 10) {
                             AppIconView(app: app, size: 22)
                             Text(app.name)
+                            Spacer()
                         }
-                        .tag(app.bundleID)
+                        .contentShape(Rectangle())
+                        .onTapGesture { selectedAppID = app.bundleID }
+                        .listRowBackground(selectedAppID == app.bundleID ? Color.accentColor.opacity(0.18) : Color.clear)
                     }
                     .listStyle(.plain)
                     .overlay {
@@ -50,9 +54,7 @@ struct RulesSettingsView: View {
 
                         Button {
                             guard let selectedAppID, hasValidAppSelection else { return }
-                            model.rules.appBundleIDs.remove(selectedAppID)
-                            model.saveSettings()
-                            self.selectedAppID = selectedApps.first?.bundleID
+                            pendingAppRemovalID = selectedAppID
                         } label: {
                             Image(systemName: "minus").frame(width: 28, height: 26)
                         }
@@ -116,7 +118,23 @@ struct RulesSettingsView: View {
         .sheet(isPresented: $isChoosingApps) { AppPickerView(model: model) }
         .onChange(of: selectedApps.map(\.bundleID)) { appIDs in
             if selectedAppID.map(appIDs.contains) != true {
-                selectedAppID = appIDs.first
+                selectedAppID = nil
+            }
+        }
+        .confirmationDialog(
+            "\(L("Remove")) “\(pendingAppRemovalName)”?",
+            isPresented: Binding(
+                get: { pendingAppRemovalID != nil },
+                set: { if !$0 { pendingAppRemovalID = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(L("Remove"), role: .destructive) {
+                guard let pendingAppRemovalID else { return }
+                model.rules.appBundleIDs.remove(pendingAppRemovalID)
+                model.saveSettings()
+                selectedAppID = nil
+                self.pendingAppRemovalID = nil
             }
         }
     }
@@ -124,6 +142,11 @@ struct RulesSettingsView: View {
     private var hasValidAppSelection: Bool {
         guard let selectedAppID else { return false }
         return selectedApps.contains { $0.bundleID == selectedAppID }
+    }
+
+    private var pendingAppRemovalName: String {
+        guard let pendingAppRemovalID else { return "" }
+        return selectedApps.first(where: { $0.bundleID == pendingAppRemovalID })?.name ?? pendingAppRemovalID
     }
 }
 

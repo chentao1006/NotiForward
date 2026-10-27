@@ -20,3 +20,28 @@ struct SettingsView: View {
         .environment(\.locale, model.language.locale)
     }
 }
+
+/// `Form` uses the old, centered two-column preferences layout on Monterey. Keep the native
+/// grouped form on newer systems and give macOS 12 a compact, top-aligned scrolling layout.
+struct SettingsForm<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    @ViewBuilder var body: some View {
+        if #available(macOS 13.0, *) {
+            Form { content }
+                .formStyle(.grouped)
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    content
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+        }
+    }
+}

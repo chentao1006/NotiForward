@@ -97,13 +97,26 @@ enum NotificationFolderAccess {
 /// `getconf DARWIN_USER_DIR` without launching a subprocess. On macOS 12–14 Notification Center
 /// stores its database below this per-user directory rather than in the home Library.
 private let darwinUserDirectory: URL = {
+    func unsandboxedRoot(_ url: URL) -> URL {
+        let standardized = url.standardizedFileURL
+        let parent = standardized.deletingLastPathComponent()
+        // Sandboxed apps receive …/0/<bundle-id>/ instead of the real …/0/ directory.
+        // Notification Center is a sibling of the app container, not a child of it.
+        if standardized.lastPathComponent != "0", parent.lastPathComponent == "0" {
+            return parent
+        }
+        return standardized
+    }
+
     let key = Int32(_CS_DARWIN_USER_DIR)
     let length = confstr(key, nil, 0)
-    guard length > 0 else { return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true) }
+    guard length > 0 else {
+        return unsandboxedRoot(URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true))
+    }
     var buffer = [CChar](repeating: 0, count: length)
     guard confstr(key, &buffer, length) > 0 else {
-        return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        return unsandboxedRoot(URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true))
     }
     let bytes = buffer.prefix { $0 != 0 }.map(UInt8.init(bitPattern:))
-    return URL(fileURLWithPath: String(decoding: bytes, as: UTF8.self), isDirectory: true)
+    return unsandboxedRoot(URL(fileURLWithPath: String(decoding: bytes, as: UTF8.self), isDirectory: true))
 }()

@@ -29,8 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
         AnalyticsManager.shared.start()
+        NSApp.setActivationPolicy(.accessory)
         observeModel()
         updateStatusItem()
         Task { await model.start() }
@@ -139,14 +139,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func showSettings() {
         model.restoreMenuBar()
         if settingsWindow == nil {
-            let controller = NSHostingController(rootView: SettingsView(model: model)
+            let contentView = SettingsView(model: model)
                 .environment(\.locale, model.language.locale)
                 .frame(width: 500)
-                .frame(minHeight: 460, idealHeight: 580))
-            let window = NSWindow(contentViewController: controller)
+                .frame(minHeight: 460, idealHeight: 580)
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 580),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                backing: .buffered,
+                defer: false
+            )
+            window.contentView = NSHostingView(rootView: contentView)
             window.title = appName
-            window.styleMask = [NSWindow.StyleMask.titled, .closable, .miniaturizable, .resizable]
-            window.setContentSize(NSSize(width: 500, height: 580))
+            window.titlebarAppearsTransparent = true
             window.center()
             window.isReleasedWhenClosed = false
             window.delegate = self

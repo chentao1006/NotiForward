@@ -3,9 +3,12 @@ import SwiftUI
 struct ClientSettingsView: View {
     @ObservedObject var model: AppModel
     @State private var selectedDeviceID: UUID?
+    @State private var editingDeviceID: UUID?
+    @State private var pendingDeviceRemovalID: UUID?
+    @FocusState private var focusedDeviceID: UUID?
 
     var body: some View {
-        Form {
+        SettingsForm {
             Section {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "iphone.radiowaves.left.and.right")
@@ -23,16 +26,28 @@ struct ClientSettingsView: View {
 
             Section {
                 VStack(spacing: 0) {
-                    List(model.general.barkDevices, selection: $selectedDeviceID) { device in
+                    List(model.general.barkDevices) { device in
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
-                                TextField(L("Device token or key"), text: Binding(
-                                    get: { deviceValue(device.id)?.input ?? "" },
-                                    set: { model.setBarkInput($0, deviceID: device.id) }
-                                ), prompt: Text(L("Paste the device token, key or URL from the Bark app")))
-                                .labelsHidden()
-                                .textFieldStyle(.plain)
-                                .font(.system(.body, design: .monospaced))
+                                if editingDeviceID == device.id {
+                                    TextField(L("Device token or key"), text: Binding(
+                                        get: { deviceValue(device.id)?.input ?? "" },
+                                        set: { model.setBarkInput($0, deviceID: device.id) }
+                                    ), prompt: Text(L("Paste the device token, key or URL from the Bark app")))
+                                    .labelsHidden()
+                                    .textFieldStyle(.plain)
+                                    .font(.system(.body, design: .monospaced))
+                                    .focused($focusedDeviceID, equals: device.id)
+                                    .onSubmit { finishEditing() }
+                                    .onExitCommand { finishEditing() }
+                                } else {
+                                    let input = deviceValue(device.id)?.input ?? ""
+                                    Text(input.isEmpty ? L("Paste the device token, key or URL from the Bark app") : input)
+                                        .font(.system(.body, design: .monospaced))
+                                        .foregroundStyle(input.isEmpty ? .secondary : .primary)
+                                        .lineLimit(1)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
 
                                 if let current = deviceValue(device.id), !current.deviceToken.isEmpty {
                                     if model.isRegistering(deviceID: device.id) {
@@ -45,7 +60,13 @@ struct ClientSettingsView: View {
                                 }
                             }
                         }
-                        .tag(device.id)
+                        .contentShape(Rectangle())
+                        .onTapGesture(count: 2) { beginEditing(device.id) }
+                        .onTapGesture {
+                            if selectedDeviceID != device.id { finishEditing() }
+                            selectedDeviceID = device.id
+                        }
+                        .listRowBackground(selectedDeviceID == device.id ? Color.accentColor.opacity(0.18) : Color.clear)
                     }
                     .listStyle(.plain)
                     .frame(height: min(180, max(72, CGFloat(model.general.barkDevices.count) * 52)))
@@ -56,6 +77,7 @@ struct ClientSettingsView: View {
                         Button {
                             model.addBarkDevice()
                             selectedDeviceID = model.general.barkDevices.last?.id
+                            if let selectedDeviceID { beginEditing(selectedDeviceID) }
                         } label: {
                             Image(systemName: "plus").frame(width: 28, height: 26)
                         }
@@ -65,8 +87,8 @@ struct ClientSettingsView: View {
 
                         Button {
                             guard let selectedDeviceID, hasValidDeviceSelection else { return }
-                            model.removeBarkDevice(id: selectedDeviceID)
-                            self.selectedDeviceID = model.general.barkDevices.first?.id
+                            finishEditing()
+                            pendingDeviceRemovalID = selectedDeviceID
                         } label: {
                             Image(systemName: "minus").frame(width: 28, height: 26)
                         }
@@ -139,12 +161,25 @@ struct ClientSettingsView: View {
             }
             .disabled(model.general.barkDevices.isEmpty)
         }
-        .onAppear {
-            if selectedDeviceID == nil { selectedDeviceID = model.general.barkDevices.first?.id }
-        }
         .onChange(of: model.general.barkDevices.map(\.id)) { deviceIDs in
             if selectedDeviceID.map(deviceIDs.contains) != true {
-                selectedDeviceID = deviceIDs.first
+                selectedDeviceID = nil
+            }
+            if editingDeviceID.map(deviceIDs.contains) != true { finishEditing() }
+        }
+        .confirmationDialog(
+            "\(L("Remove")) “\(pendingDeviceRemovalLabel)”?",
+            isPresented: Binding(
+                get: { pendingDeviceRemovalID != nil },
+                set: { if !$0 { pendingDeviceRemovalID = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(L("Remove"), role: .destructive) {
+                guard let pendingDeviceRemovalID else { return }
+                model.removeBarkDevice(id: pendingDeviceRemovalID)
+                selectedDeviceID = nil
+                self.pendingDeviceRemovalID = nil
             }
         }
     }
@@ -156,6 +191,24 @@ struct ClientSettingsView: View {
     private var hasValidDeviceSelection: Bool {
         guard let selectedDeviceID else { return false }
         return model.general.barkDevices.contains { $0.id == selectedDeviceID }
+    }
+
+    private var pendingDeviceRemovalLabel: String {
+        guard let pendingDeviceRemovalID,
+              let device = model.general.barkDevices.first(where: { $0.id == pendingDeviceRemovalID }) else { return "" }
+        let input = device.input.trimmingCharacters(in: .whitespacesAndNewlines)
+        return input.isEmpty ? "\(L("Device token or key")) (—)" : input
+    }
+
+    private func beginEditing(_ id: UUID) {
+        selectedDeviceID = id
+        editingDeviceID = id
+        DispatchQueue.main.async { focusedDeviceID = id }
+    }
+
+    private func finishEditing() {
+        focusedDeviceID = nil
+        editingDeviceID = nil
     }
 
     @ViewBuilder private var testStatusView: some View {

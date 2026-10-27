@@ -4,7 +4,7 @@ struct GeneralSettingsView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        Form {
+        SettingsForm {
             Section {
                 accessRow
                 HStack {
