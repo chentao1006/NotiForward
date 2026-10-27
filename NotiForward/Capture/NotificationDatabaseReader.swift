@@ -97,6 +97,39 @@ actor NotificationDatabaseReader {
         return result
     }
 
+    /// Seeds the rule picker from existing Notification Center history, including sources that are
+    /// helpers or background processes and therefore do not appear in the installed-app catalog.
+    func recentRecords(limit: Int = 200) throws -> [CapturedNotification] {
+        guard let db else { throw NotificationDatabaseError.permissionDenied }
+        let sql = "SELECT r.rec_id,coalesce(a.identifier,''),r.uuid,r.data,r.delivered_date FROM record r LEFT JOIN app a ON a.app_id=r.app_id WHERE coalesce(a.identifier,'')<>'' ORDER BY r.rec_id DESC LIMIT ?"
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let statement else { throw error() }
+        defer { sqlite3_finalize(statement) }
+        sqlite3_bind_int(statement, 1, Int32(limit))
+        var result: [CapturedNotification] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            let recordID = sqlite3_column_int64(statement, 0)
+            let bundleID = string(statement, 1)
+            guard let data = blob(statement, 3) else { continue }
+            let fields = decode(data)
+            let date = Date(timeIntervalSince1970: sqlite3_column_double(statement, 4) + appleEpochOffset)
+            let id = uuid(statement, 2) ?? stableID(bundleID: bundleID, recordID: recordID, date: date)
+            result.append(CapturedNotification(
+                id: id,
+                databaseID: recordID,
+                sourceBundleID: bundleID,
+                sourceAppName: appName(bundleID: bundleID),
+                title: fields.title,
+                subtitle: fields.subtitle,
+                body: fields.body,
+                originalDate: date,
+                capturedDate: Date(),
+                openURL: openURL(bundleID: bundleID)
+            ))
+        }
+        return result
+    }
+
     private func decode(_ data: Data) -> (title: String, subtitle: String, body: String) {
         guard let root = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
               let dictionary = root as? [String: Any] else { return ("", "", "") }

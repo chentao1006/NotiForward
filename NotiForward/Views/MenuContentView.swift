@@ -20,16 +20,14 @@ struct MenuContentView: View {
                 model.togglePaused()
             }
             .disabled(!model.general.isBarkConfigured)
-            Button(L("Send Test Notification")) { model.sendTest() }
-                .disabled(!model.general.isBarkConfigured)
-#if !APP_STORE
-            Button(L("Check for Updates…")) { model.updater.checkForUpdates() }
-#endif
             Button(L("Settings…")) {
                 model.restoreMenuBar()
                 openSettings()
             }
             .keyboardShortcut(",")
+#if !APP_STORE
+            Button(L("Check for Updates…")) { model.updater.checkForUpdates() }
+#endif
             Divider()
             Button(L("Quit \(appName)")) { NSApp.terminate(nil) }
                 .keyboardShortcut("q")

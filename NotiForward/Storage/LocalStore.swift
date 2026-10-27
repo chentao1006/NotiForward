@@ -70,6 +70,45 @@ actor LocalStore {
     func save(general: GeneralSettings) throws { try encodeSetting(key: "general", value: general) }
     func save(rules: RuleConfiguration) throws { try encodeSetting(key: "rules", value: rules) }
 
+    func recordRecentSources(from notifications: [CapturedNotification]) throws {
+        for notification in notifications {
+            let identifier = notification.sourceBundleID.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalized = identifier.lowercased()
+            guard !identifier.isEmpty,
+                  normalized != "com.ct106.notiforward",
+                  !normalized.hasPrefix("com.ct106.notiforward.") else { continue }
+            try statement("""
+                INSERT INTO recent_sources(identifier,name,last_seen_at) VALUES(?,?,?)
+                ON CONFLICT(identifier) DO UPDATE SET name=excluded.name,last_seen_at=excluded.last_seen_at
+                """) { statement in
+                bind(identifier, at: 1, to: statement)
+                bind(notification.sourceAppName, at: 2, to: statement)
+                sqlite3_bind_double(statement, 3, notification.originalDate.timeIntervalSince1970)
+            }
+        }
+        try statement("DELETE FROM recent_sources WHERE identifier NOT IN (SELECT identifier FROM recent_sources ORDER BY last_seen_at DESC LIMIT 200)") { _ in }
+    }
+
+    func recentSources(limit: Int = 50) throws -> [RecentNotificationSource] {
+        guard let db else { throw LocalStoreError.sqlite("Database is closed") }
+        var raw: OpaquePointer?
+        let sql = "SELECT identifier,name,last_seen_at FROM recent_sources ORDER BY last_seen_at DESC LIMIT ?"
+        guard sqlite3_prepare_v2(db, sql, -1, &raw, nil) == SQLITE_OK, let statement = raw else { throw lastError() }
+        defer { sqlite3_finalize(statement) }
+        sqlite3_bind_int(statement, 1, Int32(limit))
+        var result: [RecentNotificationSource] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            let identifier = string(statement, 0)
+            let name = string(statement, 1)
+            result.append(RecentNotificationSource(
+                identifier: identifier,
+                name: name.isEmpty ? identifier : name,
+                lastSeenAt: Date(timeIntervalSince1970: sqlite3_column_double(statement, 2))
+            ))
+        }
+        return result
+    }
+
     func enqueue(_ notification: CapturedNotification, deviceIDs: [UUID]) throws {
         let data = try JSONEncoder.notiForward.encode(PendingNotification(notification: notification, remainingDeviceIDs: deviceIDs))
         try statement("INSERT OR IGNORE INTO pending_notifications(id,payload,created_at) VALUES(?,?,?)") { statement in
@@ -163,6 +202,7 @@ actor LocalStore {
     private static let schema = """
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value BLOB NOT NULL);
     CREATE TABLE IF NOT EXISTS pending_notifications(id TEXT PRIMARY KEY, payload BLOB NOT NULL, created_at REAL NOT NULL);
+    CREATE TABLE IF NOT EXISTS recent_sources(identifier TEXT PRIMARY KEY, name TEXT NOT NULL, last_seen_at REAL NOT NULL);
     """
 }
 
@@ -177,4 +217,8 @@ private func bind(_ value: Data, at index: Int32, to statement: OpaquePointer) {
     _ = value.withUnsafeBytes { bytes in
         sqlite3_bind_blob(statement, index, bytes.baseAddress, Int32(bytes.count), sqliteTransient)
     }
+}
+
+private func string(_ statement: OpaquePointer, _ index: Int32) -> String {
+    sqlite3_column_text(statement, index).map { String(cString: $0) } ?? ""
 }

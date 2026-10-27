@@ -171,6 +171,14 @@ struct CapturedNotification: Codable, Identifiable, Hashable, Sendable {
     var openURL: String? = nil
 }
 
+struct RecentNotificationSource: Identifiable, Hashable, Sendable {
+    let identifier: String
+    let name: String
+    let lastSeenAt: Date
+
+    var id: String { identifier }
+}
+
 enum AppURLScheme {
     /// Apps whose Mac scheme differs from the one their iPhone app registers.
     private static let overrides = [

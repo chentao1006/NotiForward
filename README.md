@@ -24,14 +24,14 @@ Requires macOS 12 or later.
    - a full URL such as `https://api.day.app/yourkey/`. The server and key are split out automatically.
 4. Use the plus button below the list to add more keys. All devices share the server, interruption level, grouping, icon, and tap-action settings.
 5. Under **General → Status**, click **Grant Access…** and confirm. The panel opens on the Notification Center folder; this is the only folder the app reads. Forwarding starts within a few seconds.
-6. Pick the apps to forward under **Forwarding Rules**, then use **Send Test Notification** to confirm delivery to every device.
+6. Pick the apps to forward under **Forwarding Rules**. If a notification comes from a helper or background process that is absent from the app list, add it from **Recent Sources** at the top of the picker. Then use **Send Test Notification** to confirm delivery to every device.
 
 A self-hosted [bark-server](https://github.com/Finb/bark-server) can be set once for all devices under **Client → Advanced → Server**.
 
 ## How it works
 
 1. **Capture.** The app watches the Notification Center database (`~/Library/Group Containers/group.com.apple.usernoted`) with kernel file events and reads new rows only when it changes, so it sleeps between notifications. A 60-second safety check covers missed events. Access comes from a security-scoped bookmark of that one folder, granted in a system open panel; no Full Disk Access is needed.
-2. **Rules.** App and keyword rules run locally. Notifications that don't match never leave the Mac.
+2. **Rules.** App and keyword rules run locally. Notifications that don't match never leave the Mac. Recently captured source identifiers are kept locally so processes missing from the app catalog can be added to the rules.
 3. **Delivery.** Accepted notifications are queued in SQLite and sent concurrently to every configured Bark device. Each push carries:
    - title `App · Title`, grouped by app;
    - the app's icon, looked up on the App Store by bundle ID;
@@ -111,6 +111,6 @@ Suggested review notes:
 - Rules run on the Mac; only notifications that pass them are sent.
 - Forwarded text goes to each device's configured Bark server and through Apple's push service. Use a self-hosted server if you don't want it to pass through `api.day.app`.
 - App icons are looked up by bundle ID on Apple's App Store lookup service; no notification content is sent there.
-- Settings, every device's Bark key, and the outgoing queue live in the app's sandbox container.
+- Settings, every device's Bark key, recent notification source names and identifiers, and the outgoing queue live in the app's sandbox container. Recent sources never contain notification titles or bodies.
 
 See the full [privacy policy](https://notiforward.ct106.com/privacy.html).

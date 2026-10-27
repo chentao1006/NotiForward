@@ -14,6 +14,7 @@ final class AppModel: ObservableObject {
     @Published var general = GeneralSettings()
     @Published var rules = RuleConfiguration.initial
     @Published var catalog: [CatalogApp] = []
+    @Published var recentSources: [RecentNotificationSource] = []
     @Published var captureStatus: CaptureStatus = .starting
     @Published var isPaused = false
     @Published var isMenuBarVisible = true
@@ -68,6 +69,7 @@ final class AppModel: ObservableObject {
             monitorTask?.cancel()
             monitorTask = Task { [weak self] in await self?.runCapture(store: store, coordinator: coordinator) }
             catalog = await Task.detached(priority: .utility) { AppCatalog.load() }.value
+            recentSources = try await store.recentSources()
         } catch {
             captureStatus = .failed(error.localizedDescription)
         }
@@ -87,6 +89,9 @@ final class AppModel: ObservableObject {
             defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
             do {
                 let reader = try NotificationDatabaseReader(folder: folder)
+                let recentRecords = try await reader.recentRecords()
+                try await store.recordRecentSources(from: recentRecords)
+                recentSources = try await store.recentSources()
                 var cursor = try await store.syncCursor()
                 let maximum = try await reader.maximumRecordID()
                 if cursor == 0 || cursor > maximum {
@@ -108,6 +113,10 @@ final class AppModel: ObservableObject {
                     } else {
                         let records = try await reader.records(after: cursor)
                         if !records.isEmpty { Log.capture.debug("Read \(records.count) new record(s) after #\(cursor)") }
+                        if !records.isEmpty {
+                            try await store.recordRecentSources(from: records)
+                            recentSources = try await store.recentSources()
+                        }
                         for notification in records {
                             _ = try await coordinator.receive(notification)
                             cursor = max(cursor, notification.databaseID)

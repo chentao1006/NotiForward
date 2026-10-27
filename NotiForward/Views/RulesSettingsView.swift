@@ -161,6 +161,12 @@ private struct AppPickerView: View {
         }
     }
 
+    private var filteredRecentSources: [RecentNotificationSource] {
+        search.isEmpty ? model.recentSources : model.recentSources.filter {
+            $0.name.localizedCaseInsensitiveContains(search) || $0.identifier.localizedCaseInsensitiveContains(search)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             HStack {
@@ -172,18 +178,47 @@ private struct AppPickerView: View {
             .padding(.vertical, 6)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
 
-            List(filteredApps) { app in
-                Toggle(isOn: binding(for: app.bundleID)) {
-                    HStack(spacing: 10) {
-                        AppIconView(app: app, size: 28)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(app.name)
-                            Text(app.bundleID).font(.caption).foregroundStyle(.secondary)
+            List {
+                if !filteredRecentSources.isEmpty {
+                    Section(L("Recent Sources")) {
+                        ForEach(filteredRecentSources) { source in
+                            Toggle(isOn: binding(for: source.identifier)) {
+                                HStack(spacing: 10) {
+                                    AppIconView(app: .resolve(bundleID: source.identifier), size: 28)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(source.name)
+                                        HStack(spacing: 6) {
+                                            if source.name != source.identifier {
+                                                Text(source.identifier)
+                                            }
+                                            Text(source.lastSeenAt, style: .relative)
+                                        }
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                            .toggleStyle(.checkbox)
+                            .padding(.vertical, 2)
                         }
                     }
                 }
-                .toggleStyle(.checkbox)
-                .padding(.vertical, 2)
+
+                Section(L("Apps")) {
+                    ForEach(filteredApps) { app in
+                        Toggle(isOn: binding(for: app.bundleID)) {
+                            HStack(spacing: 10) {
+                                AppIconView(app: app, size: 28)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(app.name)
+                                    Text(app.bundleID).font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .toggleStyle(.checkbox)
+                        .padding(.vertical, 2)
+                    }
+                }
             }
             .listStyle(.bordered)
 

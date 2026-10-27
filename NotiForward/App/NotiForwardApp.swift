@@ -65,13 +65,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return
         }
         if statusItem == nil { statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength) }
-        let preferredSymbol = model.isForwarding ? "bell.and.waves.left.and.right" : "bell.slash"
-        let fallbackSymbol = model.isForwarding ? "bell" : "bell.slash"
-        let image = NSImage(systemSymbolName: preferredSymbol, accessibilityDescription: appName)
-            ?? NSImage(systemSymbolName: fallbackSymbol, accessibilityDescription: appName)
-            ?? NSImage(systemSymbolName: "bell", accessibilityDescription: appName)
+        let symbol = model.isForwarding ? "bell.circle" : "bell.slash.circle"
+        let configuration = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
+        let image = (NSImage(systemSymbolName: symbol, accessibilityDescription: appName)
+            ?? NSImage(systemSymbolName: "bell", accessibilityDescription: appName))?
+            .withSymbolConfiguration(configuration)
         image?.isTemplate = true
         statusItem?.button?.image = image
+        statusItem?.button?.imageScaling = .scaleProportionallyUpOrDown
         statusItem?.menu = makeMenu()
     }
 
@@ -90,13 +91,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.addItem(.separator())
         addItem(model.isPaused ? L("Resume Forwarding") : L("Pause Forwarding"), action: #selector(togglePaused),
                 enabled: model.general.isBarkConfigured, to: menu)
-        addItem(L("Send Test Notification"), action: #selector(sendTest),
-                enabled: model.general.isBarkConfigured, to: menu)
+        let settings = addItem(L("Settings…"), action: #selector(showSettings), to: menu)
+        settings.keyEquivalent = ","
 #if !APP_STORE
         addItem(L("Check for Updates…"), action: #selector(checkForUpdates), to: menu)
 #endif
-        let settings = addItem(L("Settings…"), action: #selector(showSettings), to: menu)
-        settings.keyEquivalent = ","
         menu.addItem(.separator())
         let quit = addItem(L("Quit \(appName)"), action: #selector(quit), to: menu)
         quit.keyEquivalent = "q"
@@ -137,7 +136,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc private func togglePaused() { model.togglePaused() }
-    @objc private func sendTest() { model.sendTest() }
 #if !APP_STORE
     @objc private func checkForUpdates() { model.updater.checkForUpdates() }
 #endif
