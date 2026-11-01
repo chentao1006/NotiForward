@@ -3,6 +3,14 @@
     <channel>
         <title>NotiForward</title>
         <item>
+            <title>1.3.4</title>
+            <pubDate>Sun, 01 Nov 2026 16:58:08 +0800</pubDate>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>1.3.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/chentao1006/NotiForward/releases/download/v1.3.4/NotiForward.dmg" length="2277570" type="application/octet-stream" sparkle:edSignature="6yDGEN3OFSztKgJh1pj8hM/nerJee3W9V+CDwBbVkKeAPrCCoJsgxDqLIGXmak1xbkNH9QUfeRykIltVewu8Aw=="/>
+        </item>
+        <item>
             <title>1.3.3</title>
             <pubDate>Tue, 27 Oct 2026 14:31:21 +0800</pubDate>
             <sparkle:version>12</sparkle:version>
@@ -17,14 +25,6 @@
             <sparkle:shortVersionString>1.3.3</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/chentao1006/NotiForward/releases/download/v1.3.3/NotiForward.dmg" length="2268125" type="application/octet-stream" sparkle:edSignature="alxboTqIGJyxGgy5LIo2LXyCtp2w6G8j26Hxr0W4aT+I4pTd5dY43F4+P3NE8C3YZ6wPEVHTN/ZFL1t3zbVXBQ=="/>
-        </item>
-        <item>
-            <title>1.3.2</title>
-            <pubDate>Tue, 27 Oct 2026 08:55:09 +0800</pubDate>
-            <sparkle:version>10</sparkle:version>
-            <sparkle:shortVersionString>1.3.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/chentao1006/NotiForward/releases/download/v1.3.2/NotiForward.dmg" length="2247787" type="application/octet-stream" sparkle:edSignature="/jglIjYm6Qqw753j7oOV7AM3v9Q+PZ/Lo2fGruB7OQdWAP3tAE6nSho5mTI2QiLqs5OP2a0ZLrxIqgBvx05lCw=="/>
         </item>
         <item>
             <title>1.2.0</title>

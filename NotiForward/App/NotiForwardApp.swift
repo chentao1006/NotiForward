@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         AnalyticsManager.shared.start()
         NSApp.setActivationPolicy(.accessory)
         observeModel()
+        updateMainMenu()
         updateStatusItem()
         Task { await model.start() }
         if !Self.launchedAsLoginItem && !AppModel.isBarkConfigured { showSettings() }
@@ -56,6 +57,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in DispatchQueue.main.async { self?.updateStatusItem() } }
             .store(in: &cancellables)
+        model.language.$bundle
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in DispatchQueue.main.async { self?.updateMainMenu() } }
+            .store(in: &cancellables)
+    }
+
+    /// Text fields only receive ⌘C/⌘V/⌘X/⌘A/⌘Z through the main menu's key equivalents,
+    /// and an app started from a hand-written main() has no main menu.
+    private func updateMainMenu() {
+        let mainMenu = NSMenu()
+
+        let appMenu = NSMenu()
+        let settings = appMenu.addItem(withTitle: L("Settings…"), action: #selector(showSettings), keyEquivalent: ",")
+        settings.target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: L("Hide \(appName)"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        let hideOthers = appMenu.addItem(withTitle: L("Hide Others"),
+                                         action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        hideOthers.keyEquivalentModifierMask = [.command, .option]
+        appMenu.addItem(withTitle: L("Show All"), action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        let quit = appMenu.addItem(withTitle: L("Quit \(appName)"), action: #selector(quit), keyEquivalent: "q")
+        quit.target = self
+        mainMenu.addItem(withTitle: appName, action: nil, keyEquivalent: "").submenu = appMenu
+
+        let editMenu = NSMenu(title: L("Edit"))
+        editMenu.addItem(withTitle: L("Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: L("Redo"), action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: L("Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: L("Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: L("Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: L("Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        mainMenu.addItem(withTitle: editMenu.title, action: nil, keyEquivalent: "").submenu = editMenu
+
+        let windowMenu = NSMenu(title: L("Window"))
+        windowMenu.addItem(withTitle: L("Minimize"), action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(withTitle: L("Close"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        mainMenu.addItem(withTitle: windowMenu.title, action: nil, keyEquivalent: "").submenu = windowMenu
+        NSApp.windowsMenu = windowMenu
+
+        NSApp.mainMenu = mainMenu
     }
 
     private func updateStatusItem() {
